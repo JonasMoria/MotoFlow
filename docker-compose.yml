@@ -1,0 +1,128 @@
+services:
+
+  api:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+      args:
+        USER_NAME: ${DOCKER_USER}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
+    container_name: motoflow-api
+    working_dir: /var/www
+    volumes:
+      - ./api:/var/www
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - motoflow
+
+  api-cli:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+      args:
+        USER_NAME: ${DOCKER_USER}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
+    container_name: motoflow-api-cli
+    user: "${DOCKER_UID}:${DOCKER_GID}"
+    working_dir: /var/www
+    volumes:
+      - ./api:/var/www
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: tail -f /dev/null
+    networks:
+      - motoflow
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: motoflow-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./api:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - api
+    networks:
+      - motoflow
+
+  mysql:
+    image: mysql:8.4
+    container_name: motoflow-database
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: motoflow
+      MYSQL_USER: motoflow
+      MYSQL_PASSWORD: motoflow
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - motoflow_mysql:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - motoflow
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: motoflow-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8081:80"
+    tmpfs:
+      - /tmp
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - motoflow
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: motoflow-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    networks:
+      - motoflow
+
+  app:
+    build:
+      context: ./docker/node
+      dockerfile: Dockerfile
+      args:
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
+    container_name: motoflow-app
+    working_dir: /app
+    volumes:
+      - ./app:/app
+      - motoflow_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    networks:
+      - motoflow
+
+networks:
+  motoflow:
+    driver: bridge
+
+volumes:
+  motoflow_mysql:
+  motoflow_node_modules:
