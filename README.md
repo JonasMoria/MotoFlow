@@ -437,6 +437,42 @@ docker compose exec app npm --version
 
 ---
 
+### PHP-CS-Fixer
+
+O projeto utiliza o **PHP-CS-Fixer** para padronização e formatação do código PHP.
+
+O PHP-CS-Fixer é executado dentro do container `api`, utilizando a mesma versão do PHP e as mesmas dependências utilizadas pela aplicação.
+
+Para verificar a versão instalada:
+
+```bash
+docker compose exec api vendor/bin/php-cs-fixer --version
+```
+
+Para executar o PHP-CS-Fixer nos arquivos PHP alterados em relação à branch `main`:
+
+```bash
+./api/php-cs-fixer.sh
+```
+
+Por padrão, o script compara os arquivos alterados com a branch `main`.
+
+Também é possível informar outra branch:
+
+```bash
+./api/php-cs-fixer.sh develop
+```
+
+O script identifica automaticamente os arquivos PHP modificados e aplica as regras definidas em:
+
+```text
+api/php-cs-fixer.php
+```
+
+> **Observação:** o PHP-CS-Fixer é executado dentro do Docker. Portanto, não é necessário instalar o PHP-CS-Fixer ou configurar uma versão específica do PHP diretamente no sistema operacional do desenvolvedor.
+
+---
+
 ## 🔐 Permissões
 
 O projeto utiliza `DOCKER_UID` e `DOCKER_GID` para manter os arquivos criados pelos containers compatíveis com o usuário do sistema operacional.
