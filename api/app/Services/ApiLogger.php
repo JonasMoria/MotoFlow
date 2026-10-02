@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ApiLogger {
-    public function error(
+    public static function error(
         string $flag,
         Throwable $exception,
     ): void {
