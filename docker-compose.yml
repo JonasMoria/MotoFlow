@@ -71,6 +71,16 @@ services:
     restart: unless-stopped
     command: php artisan queue:work database --sleep=3 --tries=3 --timeout=60
 
+  swagger:
+    image: docker.swagger.io/swaggerapi/swagger-ui:latest
+    container_name: motoflow-swagger
+    environment:
+      SWAGGER_JSON: /openapi/openapi.yaml
+    volumes:
+      - ./docs:/openapi:ro
+    networks:
+      - motoflow
+
   mysql:
     image: mysql:8.4
     container_name: motoflow-database

@@ -14,15 +14,15 @@ O MotoFlow tem como objetivo oferecer uma solução simples e eficiente para que
 
 A ideia é permitir o gerenciamento de:
 
-* 👤 Clientes
-* 🏍️ Motocicletas
-* 🔧 Serviços
-* 📋 Ordens de serviço
-* 🧾 Comandas
-* 💰 Valores e pagamentos
-* 📊 Histórico de manutenção
-* 📦 Peças e produtos
-* 📈 Indicadores da oficina
+- 👤 Clientes
+- 🏍️ Motocicletas
+- 🔧 Serviços
+- 📋 Ordens de serviço
+- 🧾 Comandas
+- 💰 Valores e pagamentos
+- 📊 Histórico de manutenção
+- 📦 Peças e produtos
+- 📈 Indicadores da oficina
 
 O sistema será desenvolvido de forma modular, permitindo que novas funcionalidades sejam adicionadas conforme o projeto evolui.
 
@@ -32,22 +32,24 @@ O sistema será desenvolvido de forma modular, permitindo que novas funcionalida
 
 ### Backend
 
-* PHP
-* Laravel
-* MySQL
-* Nginx
+- PHP
+- Laravel
+- MySQL
+- Nginx
 
 ### Frontend
 
-* Nuxt
-* Node.js
+- Nuxt
+- Node.js
 
 ### Infraestrutura
 
-* Docker
-* Docker Compose
-* phpMyAdmin
-* Mailpit
+- Docker
+- Docker Compose
+- phpMyAdmin
+- Mailpit
+- Swagger UI
+- OpenAPI
 
 ---
 
@@ -57,6 +59,8 @@ O sistema será desenvolvido de forma modular, permitindo que novas funcionalida
 motoflow/
 ├── api/                    # Backend Laravel
 ├── app/                    # Frontend Nuxt
+├── docs/
+│   └── openapi.yaml        # Documentação da API
 ├── docker/
 │   ├── mysql/
 │   │   └── init/
@@ -84,8 +88,8 @@ motoflow/
 
 Antes de iniciar, certifique-se de ter instalado:
 
-* Docker
-* Docker Compose
+- Docker
+- Docker Compose
 
 Verifique as instalações:
 
@@ -214,6 +218,8 @@ motoflow-database
 motoflow-nginx
 motoflow-phpmyadmin
 motoflow-mailpit
+motoflow-swagger
+motoflow-worker
 ```
 
 ---
@@ -244,12 +250,13 @@ docker compose exec api-cli php artisan migrate
 
 Depois que os containers estiverem em execução, os serviços estarão disponíveis nas seguintes portas:
 
-| Serviço                | URL                   |
-| ---------------------- | --------------------- |
+| Serviço | URL |
+| --- | --- |
 | 🏍️ MotoFlow / Laravel | http://localhost:8080 |
-| 🖥️ Nuxt               | http://localhost:3000 |
-| 🗄️ phpMyAdmin         | http://localhost:8081 |
-| ✉️ Mailpit             | http://localhost:8025 |
+| 📚 Swagger / API Docs | http://localhost:8080/api/documentation/ |
+| 🖥️ Nuxt | http://localhost:3000 |
+| 🗄️ phpMyAdmin | http://localhost:8081 |
+| ✉️ Mailpit | http://localhost:8025 |
 
 ### Backend
 
@@ -274,6 +281,36 @@ MySQL
 ```
 
 A porta `9000` é interna do Docker e não precisa ser acessada diretamente pelo navegador.
+
+### Documentação da API
+
+A documentação da API é disponibilizada através do Swagger UI:
+
+```text
+http://localhost:8080/api/documentation/
+```
+
+A documentação utiliza a especificação OpenAPI e permite visualizar os endpoints disponíveis da API, seus parâmetros, requisições e respostas.
+
+O arquivo de especificação OpenAPI está localizado em:
+
+```text
+docs/openapi.yaml
+```
+
+O Swagger UI é executado em um container separado e acessado através do Nginx.
+
+Fluxo:
+
+```text
+Browser
+   ↓
+Nginx :8080
+   ↓
+Swagger UI
+   ↓
+docs/openapi.yaml
+```
 
 ### Frontend
 
@@ -362,6 +399,12 @@ Acompanhar os logs do Nuxt:
 docker compose logs -f app
 ```
 
+Acompanhar os logs do Swagger:
+
+```bash
+docker compose logs -f swagger
+```
+
 ---
 
 Os comandos PHP, Artisan e Composer devem ser executados pelo container `api-cli`.
@@ -404,6 +447,7 @@ docker compose exec api-cli php artisan make:model Example
 
 ---
 
+## 🖥️ Nuxt
 
 Verificar o container:
 
@@ -437,7 +481,27 @@ docker compose exec app npm --version
 
 ---
 
-### PHP-CS-Fixer
+## 📚 Documentação da API
+
+A documentação da API utiliza **OpenAPI** e **Swagger UI**.
+
+A especificação está localizada em:
+
+```text
+docs/openapi.yaml
+```
+
+Para visualizar a documentação:
+
+```text
+http://localhost:8080/api/documentation/
+```
+
+O Swagger UI permite visualizar e testar os endpoints documentados da API diretamente pelo navegador.
+
+---
+
+## 🧹 PHP-CS-Fixer
 
 O projeto utiliza o **PHP-CS-Fixer** para padronização e formatação do código PHP.
 

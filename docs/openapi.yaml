@@ -1,0 +1,72 @@
+openapi: 3.0.3
+
+info:
+  title: MotoFlow API
+  description: API para gerenciamento de oficinas de motocicletas.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+    description: Ambiente local
+
+tags:
+  - name: Health
+    description: Verificação de disponibilidade da API
+
+  - name: Autenticação
+    description: Endpoints relacionados à autenticação dos usuários
+
+paths:
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Verifica a disponibilidade da API
+      description: Retorna o estado atual da API.
+      operationId: healthCheck
+
+      responses:
+        '200':
+          description: API disponível
+
+
+  /login:
+    post:
+      tags:
+        - Autenticação
+      summary: Realiza o login do usuário
+      description: Inicia o processo de autenticação do usuário.
+      operationId: login
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: E-mail utilizado para autenticação
+                  example: usuario@motoflow.com
+
+                password:
+                  type: string
+                  format: password
+                  description: Senha do usuário
+                  example: secret
+
+      responses:
+        '200':
+          description: Login realizado com sucesso
+
+        '401':
+          description: Credenciais inválidas
+
+        '422':
+          description: Dados de entrada inválidos
