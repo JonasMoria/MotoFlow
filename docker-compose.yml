@@ -51,6 +51,26 @@ services:
     networks:
       - motoflow
 
+  worker:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+      args:
+        USER_NAME: ${DOCKER_USER}
+        UID: ${DOCKER_UID}
+        GID: ${DOCKER_GID}
+    container_name: motoflow-worker
+    working_dir: /var/www
+    volumes:
+      - ./api:/var/www
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - motoflow
+    restart: unless-stopped
+    command: php artisan queue:work database --sleep=3 --tries=3 --timeout=60
+
   mysql:
     image: mysql:8.4
     container_name: motoflow-database
