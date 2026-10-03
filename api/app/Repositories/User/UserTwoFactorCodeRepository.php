@@ -50,4 +50,10 @@ class UserTwoFactorCodeRepository {
                 'used_at' => now(),
             ]);
     }
+
+    public function deleteUsedCodes(): int {
+        return UserTwoFactorCode::query()
+            ->whereNotNull('used_at')
+            ->delete();
+    }
 }
