@@ -145,6 +145,7 @@ DOCKER_GID=1000
 ```
 
 Esses valores são utilizados pelos containers para evitar que arquivos do projeto sejam criados com `root:root`.
+Isso evita problemas comuns de desenvolvimento em Linux, como arquivos pertencentes ao usuário root no diretório do projeto.
 
 ---
 
@@ -220,6 +221,7 @@ motoflow-phpmyadmin
 motoflow-mailpit
 motoflow-swagger
 motoflow-worker
+motoflow-scheduler
 ```
 
 ---
@@ -421,30 +423,6 @@ Atualizar dependências:
 docker compose exec api-cli composer update
 ```
 
-### Artisan
-
-```bash
-docker compose exec api-cli php artisan
-```
-
-Executar migrations:
-
-```bash
-docker compose exec api-cli php artisan migrate
-```
-
-Criar uma migration:
-
-```bash
-docker compose exec api-cli php artisan make:migration create_example_table
-```
-
-Criar um model:
-
-```bash
-docker compose exec api-cli php artisan make:model Example
-```
-
 ---
 
 ## 🖥️ Nuxt
@@ -465,18 +443,6 @@ Abrir um shell no container:
 
 ```bash
 docker compose exec app sh
-```
-
-Verificar a versão do Node:
-
-```bash
-docker compose exec app node --version
-```
-
-Verificar a versão do npm:
-
-```bash
-docker compose exec app npm --version
 ```
 
 ---
@@ -507,12 +473,6 @@ O projeto utiliza o **PHP-CS-Fixer** para padronização e formatação do códi
 
 O PHP-CS-Fixer é executado dentro do container `api`, utilizando a mesma versão do PHP e as mesmas dependências utilizadas pela aplicação.
 
-Para verificar a versão instalada:
-
-```bash
-docker compose exec api vendor/bin/php-cs-fixer --version
-```
-
 Para executar o PHP-CS-Fixer nos arquivos PHP alterados em relação à branch `main`:
 
 ```bash
@@ -534,22 +494,6 @@ api/php-cs-fixer.php
 ```
 
 > **Observação:** o PHP-CS-Fixer é executado dentro do Docker. Portanto, não é necessário instalar o PHP-CS-Fixer ou configurar uma versão específica do PHP diretamente no sistema operacional do desenvolvedor.
-
----
-
-## 🔐 Permissões
-
-O projeto utiliza `DOCKER_UID` e `DOCKER_GID` para manter os arquivos criados pelos containers compatíveis com o usuário do sistema operacional.
-
-Exemplo:
-
-```env
-DOCKER_USER=motoflow
-DOCKER_UID=1000
-DOCKER_GID=1000
-```
-
-Isso evita problemas comuns de desenvolvimento em Linux, como arquivos pertencentes ao usuário `root` no diretório do projeto.
 
 ---
 
