@@ -13,6 +13,7 @@ use App\Repositories\User\UserRepository;
 use App\Repositories\User\UserTwoFactorCodeRepository;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class UserLoginService {
     public const DEFAULT_TOKEN_TYPE = 'Bearer';
@@ -72,6 +73,14 @@ class UserLoginService {
             'token' => $token,
             'token_type' => self::DEFAULT_TOKEN_TYPE,
         ];
+    }
+
+    public function logout(PersonalAccessToken $token): void {
+        $token->delete();
+    }
+
+    public function logoutAll(User $user): void {
+        $user->tokens()->delete();
     }
 
     protected function validateLogin(?User $user, UserLoginDTO $userLoginInformations): void {

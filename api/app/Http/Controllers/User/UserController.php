@@ -10,6 +10,7 @@ use App\Http\Requests\User\UserLoginRequest;
 use App\Http\Requests\User\UserLoginVerifyRequest;
 use App\Services\User\UserLoginService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class UserController extends Controller {
     private UserLoginService $userLoginService;
@@ -53,5 +54,36 @@ class UserController extends Controller {
         };
 
         return $this->makeRequest('USER.VERIFY.LOGIN', $verifyLoginResponse);
+    }
+
+    public function logout(Request $request): JsonResponse {
+        $logoutResponse = function () use ($request) {
+            $user = $request->user();
+            $token = $user->currentAccessToken();
+
+            $this->userLoginService->logout($token);
+
+            return self::makeHttpResponse(
+                'USER.LOGOUT.DONE',
+                HttpStatusCode::OK,
+            );
+        };
+
+        return $this->makeRequest('USER.LOGOUT', $logoutResponse);
+    }
+
+    public function logoutAll(Request $request): JsonResponse {
+        $logoutAllResponse = function () use ($request) {
+            $user = $request->user();
+
+            $this->userLoginService->logoutAll($user);
+
+            return self::makeHttpResponse(
+                'USER.LOGOUT.ALL.DONE',
+                HttpStatusCode::OK,
+            );
+        };
+
+        return $this->makeRequest('USER.LOGOUT', $logoutAllResponse);
     }
 }
