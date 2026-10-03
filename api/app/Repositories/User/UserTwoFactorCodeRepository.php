@@ -27,4 +27,27 @@ class UserTwoFactorCodeRepository {
                 'used_at' => now(),
             ]);
     }
+
+    public function findLatestValidByUserId(int $userId): ?UserTwoFactorCode {
+        return UserTwoFactorCode::query()
+            ->where('user_id', $userId)
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->latest('id')
+            ->first();
+    }
+
+    public function incrementAttempts(int $twoFactorCodeId): void {
+        UserTwoFactorCode::query()
+            ->whereKey($twoFactorCodeId)
+            ->increment('attempts');
+    }
+
+    public function markAsUsed(int $twoFactorCodeId): void {
+        UserTwoFactorCode::query()
+            ->whereKey($twoFactorCodeId)
+            ->update([
+                'used_at' => now(),
+            ]);
+    }
 }

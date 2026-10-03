@@ -6,4 +6,6 @@ use Illuminate\Support\Facades\Route;
 
 // Public API's
 Route::get('/health', [HealthController::class, 'check']);
+
 Route::post('/login', [UserController::class, 'login']);
+Route::post('/login/verify', [UserController::class, 'verifyLogin']);
