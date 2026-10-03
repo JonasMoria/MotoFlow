@@ -63,10 +63,77 @@ paths:
 
       responses:
         '200':
-          description: Login realizado com sucesso
+          description: Login iniciado com sucesso
 
         '401':
           description: Credenciais inválidas
 
         '422':
           description: Dados de entrada inválidos
+
+
+  /login/verify:
+    post:
+      tags:
+        - Autenticação
+      summary: Verifica o código de autenticação
+      description: >
+        Valida o código de autenticação de dois fatores enviado ao usuário
+        após o login. Quando o código é válido, utilizado pela primeira vez
+        e ainda está dentro do prazo de validade, a autenticação é concluída
+        e um token de acesso Sanctum é gerado.
+      operationId: verifyLogin
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - code
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: E-mail utilizado na tentativa de login
+                  example: usuario@motoflow.com
+
+                code:
+                  type: string
+                  description: Código de autenticação de dois fatores recebido pelo usuário
+                  example: "123456"
+
+      responses:
+        '200':
+          description: Código validado e autenticação concluída
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: USER.LOGIN.SUCCESS
+
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        description: Token de acesso gerado pelo Laravel Sanctum
+                        example: 1|abcdefghijklmnopqrstuvwxyz123456
+
+                      token_type:
+                        type: string
+                        example: Bearer
+
+        '401':
+          description: Código inválido ou credenciais inválidas
+
+        '422':
+          description: Dados de entrada inválidos
+
+        '403':
+          description: Código expirado ou número máximo de tentativas excedido
