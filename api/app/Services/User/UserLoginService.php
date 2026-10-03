@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
 class UserLoginService {
+    public const DEFAULT_TOKEN_TYPE = 'Bearer';
+
     private UserRepository $userRepository;
     private UserTwoFactorCodeRepository $userTwoFactorCodeRepository;
 
@@ -64,11 +66,11 @@ class UserLoginService {
             $twoFactorCode->id,
         );
 
-        $token = $user->createToken(config('app.name'))->plainTextToken;
+        $token = $user->createToken($user->email)->plainTextToken;
 
         return [
             'token' => $token,
-            'token_type' => 'Bearer',
+            'token_type' => self::DEFAULT_TOKEN_TYPE,
         ];
     }
 
