@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\MotorCycle\MotorCycleController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,4 +18,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout-all', [UserController::class, 'logoutAll']);
 
     Route::post('/client', [ClientController::class, 'create']);
+
+    Route::post('/motorcycle/{clientId}', [MotorCycleController::class, 'create']);
 });

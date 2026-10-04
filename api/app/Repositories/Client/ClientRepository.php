@@ -22,4 +22,11 @@ class ClientRepository {
 
         return $client->refresh();
     }
+
+    public function existsByIdAndUserId(int $clientId, int $userId): bool {
+        return ClientModel::query()
+            ->where('id', $clientId)
+            ->where('user_id', $userId)
+            ->exists();
+    }
 }
