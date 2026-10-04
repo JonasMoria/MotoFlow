@@ -137,3 +137,81 @@ paths:
 
         '403':
           description: Código expirado ou número máximo de tentativas excedido
+
+
+  /logout:
+    post:
+      tags:
+        - Autenticação
+      summary: Encerra a sessão atual
+      description: >
+        Revoga o token de acesso Sanctum utilizado na requisição,
+        encerrando somente a sessão atual do usuário.
+      operationId: logout
+
+      security:
+        - bearerAuth: []
+
+      responses:
+        '200':
+          description: Sessão encerrada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: USER.LOGOUT.DONE
+
+                  data:
+                    nullable: true
+                    example: null
+
+        '401':
+          description: Token de acesso ausente, inválido ou expirado
+
+
+  /logout-all:
+    post:
+      tags:
+        - Autenticação
+      summary: Encerra todas as sessões do usuário
+      description: >
+        Revoga todos os tokens de acesso Sanctum associados ao usuário,
+        encerrando todas as sessões ativas em todos os dispositivos.
+      operationId: logoutAll
+
+      security:
+        - bearerAuth: []
+
+      responses:
+        '200':
+          description: Todas as sessões foram encerradas com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: USER.LOGOUT.ALL.DONE
+
+                  data:
+                    nullable: true
+                    example: null
+
+        '401':
+          description: Token de acesso ausente, inválido ou expirado
+
+
+components:
+  securitySchemes:
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+      description: >
+        Token de acesso Laravel Sanctum.
+        Informe o token no formato "Bearer {token}".
