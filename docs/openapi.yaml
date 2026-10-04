@@ -297,6 +297,142 @@ paths:
         '422':
           description: Dados de entrada inválidos
 
+  /api/motorcycle/{clientId}:
+    post:
+      tags:
+        - Motocicletas
+      summary: Cadastrar motocicleta para um cliente
+      description: |
+        Cadastra uma nova motocicleta vinculada a um cliente.
+
+        O cliente informado no parâmetro `clientId` deve existir e
+        pertencer ao usuário autenticado.
+
+        A placa e o RENAVAM são normalizados antes da persistência.
+      operationId: createClientMotorCycle
+      security:
+        - bearerAuth: []
+
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: ID do cliente ao qual a motocicleta será vinculada.
+          schema:
+            type: integer
+            example: 15
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - brand
+                - model
+                - plate
+              properties:
+                brand:
+                  type: string
+                  maxLength: 100
+                  example: Honda
+
+                model:
+                  type: string
+                  maxLength: 100
+                  example: CG 160 Titan
+
+                plate:
+                  type: string
+                  maxLength: 10
+                  example: ABC-1D23
+
+                renavam:
+                  type: string
+                  nullable: true
+                  maxLength: 11
+                  example: "12345678901"
+
+                chassis:
+                  type: string
+                  nullable: true
+                  maxLength: 17
+                  example: 9C2KC0810FR123456
+
+                year:
+                  type: integer
+                  nullable: true
+                  minimum: 1900
+                  example: 2024
+
+                color:
+                  type: string
+                  nullable: true
+                  maxLength: 50
+                  example: Preto
+
+                engine_number:
+                  type: string
+                  nullable: true
+                  maxLength: 50
+                  example: KC08E1F123456
+
+            example:
+              brand: Honda
+              model: CG 160 Titan
+              plate: ABC-1D23
+              renavam: "12345678901"
+              chassis: 9C2KC0810FR123456
+              year: 2024
+              color: Preto
+              engine_number: KC08E1F123456
+
+      responses:
+        '201':
+          description: Motocicleta cadastrada com sucesso.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: MOTORCYCLE.CREATE.DONE
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 42
+
+        '401':
+          description: Usuário não autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: USER.UNAUTHENTICATED
+                data: null
+
+        '404':
+          description: Cliente não encontrado ou não pertence ao usuário autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: CLIENT.NOT.FOUND
+                data: null
+
+        '422':
+          description: Dados da motocicleta inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
 components:
   securitySchemes:
 
