@@ -30,7 +30,6 @@ paths:
         '200':
           description: API disponível
 
-
   /login:
     post:
       tags:
@@ -70,7 +69,6 @@ paths:
 
         '422':
           description: Dados de entrada inválidos
-
 
   /login/verify:
     post:
@@ -138,7 +136,6 @@ paths:
         '403':
           description: Código expirado ou número máximo de tentativas excedido
 
-
   /logout:
     post:
       tags:
@@ -170,7 +167,6 @@ paths:
 
         '401':
           description: Token de acesso ausente, inválido ou expirado
-
 
   /logout-all:
     post:
@@ -204,6 +200,102 @@ paths:
         '401':
           description: Token de acesso ausente, inválido ou expirado
 
+  /clients:
+    post:
+      tags:
+        - Clientes
+      summary: Cadastra um novo cliente
+      description: >
+        Cadastra um novo cliente vinculado ao usuário autenticado.
+        O telefone e o documento são normalizados antes de serem armazenados.
+
+      operationId: createClient
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - phone
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  description: Nome completo do cliente
+                  example: João da Silva
+
+                phone:
+                  type: string
+                  description: >
+                    Número de celular brasileiro. Pode ser informado
+                    com máscara ou apenas números.
+                  example: "(19) 98765-4321"
+
+                email:
+                  type: string
+                  format: email
+                  nullable: true
+                  maxLength: 255
+                  description: E-mail do cliente
+                  example: joao@email.com
+
+                document:
+                  type: string
+                  nullable: true
+                  maxLength: 20
+                  description: Documento do cliente, como CPF ou CNPJ
+                  example: "123.456.789-00"
+
+                address:
+                  type: string
+                  nullable: true
+                  description: Endereço do cliente
+                  example: Rua das Flores, 100
+
+            example:
+              name: João da Silva
+              phone: "(19) 98765-4321"
+              email: joao@email.com
+              document: "123.456.789-00"
+              address: Rua das Flores, 100
+
+      responses:
+        '201':
+          description: Cliente cadastrado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: CLIENT.CREATE.SUCCESS
+
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: Identificador do cliente
+                        example: 1
+
+                      avatar_path:
+                        type: string
+                        nullable: true
+                        description: Caminho da foto do cliente
+                        example: null
+
+        '401':
+          description: Usuário não autenticado
+
+        '422':
+          description: Dados de entrada inválidos
 
 components:
   securitySchemes:

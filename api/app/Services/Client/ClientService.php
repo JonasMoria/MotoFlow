@@ -25,7 +25,7 @@ class ClientService {
 
     public function createClient(?User $user, CreateClientDTO $clientDTO): array {
         if (!$user) {
-            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED, );
+            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
         }
 
         $avatarPath = '';
