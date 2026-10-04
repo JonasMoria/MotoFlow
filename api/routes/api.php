@@ -18,6 +18,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout-all', [UserController::class, 'logoutAll']);
 
     Route::post('/client', [ClientController::class, 'create']);
+    Route::get('/client', [ClientController::class, 'findAll']);
+    Route::get('/client/{clientId}', [ClientController::class, 'findById']);
 
     Route::post('/motorcycle/{clientId}', [MotorCycleController::class, 'create']);
 });

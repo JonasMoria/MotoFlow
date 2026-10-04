@@ -3,8 +3,10 @@
 namespace App\Services\Client;
 
 use App\DTOs\Client\CreateClientDTO;
+use App\DTOs\Client\FindAllClientDTO;
 use App\Enums\HttpStatusCode;
 use App\Exceptions\AppException;
+use App\Mappers\Client\ClientMapper;
 use App\Models\Client\ClientModel;
 use App\Models\User\User;
 use App\Repositories\Client\ClientRepository;
@@ -24,9 +26,7 @@ class ClientService {
     }
 
     public function createClient(?User $user, CreateClientDTO $clientDTO): array {
-        if (!$user) {
-            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
-        }
+        $this->validateUser($user);
 
         $avatarPath = '';
 
@@ -112,5 +112,35 @@ class ClientService {
         );
 
         return $path ?: '';
+    }
+
+    public function findAll(?User $user, FindAllClientDTO $clientDTO): array {
+        $this->validateUser($user);
+
+        $clients = $this->clientRepository->findAll(
+            $user->id,
+            $clientDTO,
+        );
+
+        $clientsMapped = ClientMapper::toPaginatedArray($clients);
+        return $clientsMapped;
+    }
+
+    public function findById(?User $user, int $clientId): array {
+        $this->validateUser($user);
+
+        $client = $this->clientRepository->findById($user->id, $clientId);
+        if (!$client) {
+            throw new AppException('CLIENT.NOT_FOUND', HttpStatusCode::NOT_FOUND);
+        }
+
+        $clientMapped = ClientMapper::toArray($client);
+        return $clientMapped;
+    }
+
+    private function validateUser(?User $user): void {
+        if (!$user) {
+            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
+        }
     }
 }
