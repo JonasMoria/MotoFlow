@@ -2,6 +2,7 @@
 
 namespace App\Models\User;
 
+use App\Models\Client\ClientModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -45,5 +46,9 @@ class User extends Authenticatable {
 
     public function twoFactorCodes(): HasMany {
         return $this->hasMany(UserTwoFactorCode::class);
+    }
+
+    public function clients(): HasMany {
+        return $this->hasMany(ClientModel::class);
     }
 }

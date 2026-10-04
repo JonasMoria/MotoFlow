@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
@@ -14,4 +15,6 @@ Route::post('/login/verify', [UserController::class, 'verifyLogin']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logout']);
     Route::post('/logout-all', [UserController::class, 'logoutAll']);
+
+    Route::post('/client', [ClientController::class, 'create']);
 });
