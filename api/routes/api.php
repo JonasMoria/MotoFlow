@@ -19,7 +19,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/client', [ClientController::class, 'create']);
     Route::get('/client', [ClientController::class, 'findAll']);
-    Route::get('/client/{clientId}', [ClientController::class, 'findAllfindAll']);
+    Route::get('/client/{clientId}', [ClientController::class, 'findById']);
+    Route::patch('/client/{clientId}', [ClientController::class, 'update']);
 
     Route::post('/motorcycle/{clientId}', [MotorCycleController::class, 'create']);
     Route::get('/motorcycle/{clientId}/all', [MotorCycleController::class, 'findAll']);

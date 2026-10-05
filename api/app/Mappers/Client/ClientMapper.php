@@ -2,6 +2,7 @@
 
 namespace App\Mappers\Client;
 
+use App\DTOs\Client\UpdateClientDTO;
 use App\Models\Client\ClientModel;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -38,5 +39,27 @@ final class ClientMapper {
                 'to' => $paginator->lastItem(),
             ],
         ];
+    }
+
+    public static function toUpdateArray(UpdateClientDTO $clientDTO): array {
+        $fields = [
+            'name' => 'name',
+            'phone' => 'phone',
+            'email' => 'email',
+            'document' => 'document',
+            'address' => 'address',
+        ];
+
+        $data = [];
+
+        foreach ($fields as $dtoField => $databaseField) {
+            $value = $clientDTO->{$dtoField};
+
+            if ($value !== null) {
+                $data[$databaseField] = $value;
+            }
+        }
+
+        return $data;
     }
 }

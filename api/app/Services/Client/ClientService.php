@@ -4,6 +4,7 @@ namespace App\Services\Client;
 
 use App\DTOs\Client\CreateClientDTO;
 use App\DTOs\Client\FindAllClientDTO;
+use App\DTOs\Client\UpdateClientDTO;
 use App\Enums\HttpStatusCode;
 use App\Exceptions\AppException;
 use App\Mappers\Client\ClientMapper;
@@ -129,18 +130,70 @@ class ClientService {
     public function findById(?User $user, int $clientId): array {
         $this->validateUser($user);
 
-        $client = $this->clientRepository->findById($user->id, $clientId);
-        if (!$client) {
-            throw new AppException('CLIENT.NOT_FOUND', HttpStatusCode::NOT_FOUND);
-        }
+        $client = $this->getClient($user->id, $clientId);
 
         $clientMapped = ClientMapper::toArray($client);
         return $clientMapped;
+    }
+
+    public function update(
+        ?User $user,
+        int $clientId,
+        UpdateClientDTO $clientDTO,
+    ): array {
+        $this->validateUser($user);
+
+        $client = $this->getClient($user->id, $clientId);
+
+        $data = ClientMapper::toUpdateArray($clientDTO);
+
+        $oldAvatarPath = $client->avatar_path;
+        $newAvatarPath = null;
+
+        try {
+            if ($clientDTO->avatar !== null) {
+                $newAvatarPath = $clientDTO->avatar->store(
+                    "clients/{$client->id}/avatar",
+                    'public',
+                );
+
+                $data['avatar_path'] = $newAvatarPath;
+            }
+
+            $clientUpdated = $this->clientRepository->update(
+                $client,
+                $data,
+            );
+
+            if ($newAvatarPath !== null && $oldAvatarPath !== null) {
+                Storage::disk('public')->delete($oldAvatarPath);
+            }
+
+            return [
+                'id' => $clientUpdated->id,
+            ];
+        } catch (Throwable $exception) {
+            if ($newAvatarPath !== null) {
+                Storage::disk('public')->delete($newAvatarPath);
+            }
+
+            throw $exception;
+        }
     }
 
     private function validateUser(?User $user): void {
         if (!$user) {
             throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
         }
+    }
+
+    private function getClient(int $userId, int $clientId): ClientModel {
+        $client = $this->clientRepository->findById($userId, $clientId);
+
+        if (!$client) {
+            throw new AppException('CLIENT.NOT_FOUND', HttpStatusCode::NOT_FOUND);
+        }
+
+        return $client;
     }
 }

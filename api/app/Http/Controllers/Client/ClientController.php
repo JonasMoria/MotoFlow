@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Client;
 
 use App\DTOs\Client\CreateClientDTO;
 use App\DTOs\Client\FindAllClientDTO;
+use App\DTOs\Client\UpdateClientDTO;
 use App\Enums\HttpStatusCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\CreateClientRequest;
 use App\Http\Requests\Client\FindAllClientRequest;
+use App\Http\Requests\Client\UpdateClientRequest;
 use App\Services\Client\ClientService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -78,5 +80,28 @@ class ClientController extends Controller {
         };
 
         return $this->makeRequest('CLIENT.FIND_BY_ID', $findByIdResponse);
+    }
+
+    public function update(UpdateClientRequest $request, int $clientId): JsonResponse {
+        $updateResponse = function () use ($request, $clientId) {
+            $user = Auth::user();
+            $clientDTO = UpdateClientDTO::fromArray(
+                $request->validated(),
+            );
+
+            $client = $this->clientService->update(
+                $user,
+                $clientId,
+                $clientDTO,
+            );
+
+            return self::makeHttpResponse(
+                'CLIENT.UPDATED',
+                HttpStatusCode::OK,
+                $client,
+            );
+        };
+
+        return $this->makeRequest('CLIENT.UPDATE', $updateResponse);
     }
 }
