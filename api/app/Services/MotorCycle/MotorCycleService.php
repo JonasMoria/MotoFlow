@@ -2,9 +2,11 @@
 
 namespace App\Services\MotorCycle;
 
+use App\DTOs\MotorCycle\FindAllClientMotorCycleDTO;
 use App\DTOs\MotorCycle\CreateClientMotorCycleDTO;
 use App\Enums\HttpStatusCode;
 use App\Exceptions\AppException;
+use App\Mappers\MotorCycle\MotorCycleMapper;
 use App\Models\User\User;
 use App\Repositories\Client\ClientRepository;
 use App\Repositories\MotorCycle\MotorCycleRepository;
@@ -12,14 +14,14 @@ use App\Support\PlateNormalizer;
 use App\Support\StringNormalizer;
 
 class MotorCycleService {
-    private MotorCycleRepository $motorcicleRepository;
+    private MotorCycleRepository $motorCycleRepository;
     private ClientRepository $clientRepository;
 
     public function __construct(
-        ?MotorCycleRepository $motorcicleRepository = null,
+        ?MotorCycleRepository $motorCycleRepository = null,
         ?ClientRepository $clientRepository = null,
     ) {
-        $this->motorcicleRepository = $motorcicleRepository ?? new MotorCycleRepository();
+        $this->motorCycleRepository = $motorCycleRepository ?? new MotorCycleRepository();
         $this->clientRepository = $clientRepository ?? new ClientRepository();
     }
 
@@ -38,7 +40,7 @@ class MotorCycleService {
         }
 
         $motorcycleDTO = $this->normalizeCreateMotorCycle($clientMotorCycleDTO);
-        $motorcycle = $this->motorcicleRepository->create($clientId, $motorcycleDTO);
+        $motorcycle = $this->motorCycleRepository->create($clientId, $motorcycleDTO);
 
         return [
             'id' => $motorcycle->id,
@@ -60,5 +62,49 @@ class MotorCycleService {
             'color' => $clientMotorCycleDTO->color,
             'engine_number' => $clientMotorCycleDTO->engineNumber,
         ]);
+    }
+
+    public function findAll(
+        ?User $user,
+        int $clientId,
+        FindAllClientMotorCycleDTO $motorCycleDTO,
+    ): array {
+        $this->validateUser($user);
+
+        $motorcycles = $this->motorCycleRepository->findAll(
+            $user->id,
+            $clientId,
+            $motorCycleDTO,
+        );
+
+        $motorcyclesMapped = MotorCycleMapper::toPaginatedArray($motorcycles);
+        return $motorcyclesMapped;
+    }
+
+    public function findById(
+        ?User $user,
+        int $clientId,
+        int $motorcycleId,
+    ) {
+        $this->validateUser($user);
+
+        $motorcycle = $this->motorCycleRepository->findById(
+            $user->id,
+            $clientId,
+            $motorcycleId,
+        );
+
+        if (!$motorcycle) {
+            throw new AppException('MOTORCYCLE.NOT_FOUND', HttpStatusCode::NOT_FOUND);
+        }
+
+        $motorcycleMapped = MotorCycleMapper::toArray($motorcycle);
+        return $motorcycleMapped;
+    }
+
+    private function validateUser(?User $user): void {
+        if (!$user) {
+            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
+        }
     }
 }
