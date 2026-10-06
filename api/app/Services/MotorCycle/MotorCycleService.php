@@ -123,6 +123,22 @@ class MotorCycleService {
         ];
     }
 
+    public function delete(?User $user, int $clientId, int $motorcycleId): array {
+        $this->validateUser($user);
+
+        $motorcycle = $this->getMotorcycle(
+            $user->id,
+            $clientId,
+            $motorcycleId,
+        );
+
+        $removed = $this->motorCycleRepository->delete($motorcycle);
+
+        return [
+            'removed' => $removed,
+        ];
+    }
+
     private function validateUser(?User $user): void {
         if (!$user) {
             throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);

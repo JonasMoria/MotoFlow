@@ -61,4 +61,8 @@ class MotorCycleRepository {
 
         return $motorCycle->refresh();
     }
+
+    public function delete(MotorCycleModel $motorCycle): ?bool {
+        return $motorCycle->delete();
+    }
 }

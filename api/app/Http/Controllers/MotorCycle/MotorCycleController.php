@@ -117,4 +117,24 @@ class MotorCycleController extends Controller {
 
         return $this->makeRequest('MOTORCYCLE.UPDATE', $updateResponse);
     }
+
+    public function delete(int $clientId, int $motorcycleId): JsonResponse {
+        $deleteResponse = function () use ($clientId, $motorcycleId) {
+            $user = Auth::user();
+
+            $motorcycle = $this->motorCycleService->delete(
+                $user,
+                $clientId,
+                $motorcycleId,
+            );
+
+            return self::makeHttpResponse(
+                'MOTORCYCLE.DELETED',
+                HttpStatusCode::OK,
+                $motorcycle,
+            );
+        };
+
+        return $this->makeRequest('MOTORCYCLE.DELETE', $deleteResponse);
+    }
 }
