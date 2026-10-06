@@ -2,11 +2,13 @@
 
 namespace App\Services\MotorCycle;
 
-use App\DTOs\MotorCycle\FindAllClientMotorCycleDTO;
 use App\DTOs\MotorCycle\CreateClientMotorCycleDTO;
+use App\DTOs\MotorCycle\FindAllClientMotorCycleDTO;
+use App\DTOs\MotorCycle\UpdateClientMotorCycleDTO;
 use App\Enums\HttpStatusCode;
 use App\Exceptions\AppException;
 use App\Mappers\MotorCycle\MotorCycleMapper;
+use App\Models\MotorCycle\MotorCycleModel;
 use App\Models\User\User;
 use App\Repositories\Client\ClientRepository;
 use App\Repositories\MotorCycle\MotorCycleRepository;
@@ -88,8 +90,48 @@ class MotorCycleService {
     ) {
         $this->validateUser($user);
 
-        $motorcycle = $this->motorCycleRepository->findById(
+        $motorcycle = $this->getMotorcycle(
             $user->id,
+            $clientId,
+            $motorcycleId,
+        );
+
+        $motorcycleMapped = MotorCycleMapper::toArray($motorcycle);
+        return $motorcycleMapped;
+    }
+
+    public function update(
+        ?User $user,
+        UpdateClientMotorCycleDTO $motorCycleDTO,
+        int $clientId,
+        int $motorcycleId,
+    ): array {
+        $this->validateUser($user);
+
+        $motorcycle = $this->getMotorcycle(
+            $user->id,
+            $clientId,
+            $motorcycleId,
+        );
+
+        $data = MotorCycleMapper::toUpdateArray($motorCycleDTO);
+
+        $motorcycleUpdated = $this->motorCycleRepository->update($motorcycle, $data);
+
+        return [
+            'id' => $motorcycleUpdated->id,
+        ];
+    }
+
+    private function validateUser(?User $user): void {
+        if (!$user) {
+            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
+        }
+    }
+
+    private function getMotorcycle(int $userId, int $clientId, int $motorcycleId): MotorCycleModel {
+        $motorcycle = $this->motorCycleRepository->findById(
+            $userId,
             $clientId,
             $motorcycleId,
         );
@@ -98,13 +140,6 @@ class MotorCycleService {
             throw new AppException('MOTORCYCLE.NOT_FOUND', HttpStatusCode::NOT_FOUND);
         }
 
-        $motorcycleMapped = MotorCycleMapper::toArray($motorcycle);
-        return $motorcycleMapped;
-    }
-
-    private function validateUser(?User $user): void {
-        if (!$user) {
-            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
-        }
+        return $motorcycle;
     }
 }

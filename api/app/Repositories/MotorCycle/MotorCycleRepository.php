@@ -2,8 +2,8 @@
 
 namespace App\Repositories\MotorCycle;
 
-use App\DTOs\MotorCycle\FindAllClientMotorCycleDTO;
 use App\DTOs\MotorCycle\CreateClientMotorCycleDTO;
+use App\DTOs\MotorCycle\FindAllClientMotorCycleDTO;
 use App\Models\MotorCycle\MotorCycleModel;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -54,5 +54,11 @@ class MotorCycleRepository {
                 fn ($query) => $query->where('user_id', $userId),
             )
             ->first();
+    }
+
+    public function update(MotorCycleModel $motorCycle, array $data): MotorCycleModel {
+        $motorCycle->update($data);
+
+        return $motorCycle->refresh();
     }
 }

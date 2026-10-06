@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\MotorCycle;
 
-
 use App\DTOs\MotorCycle\CreateClientMotorCycleDTO;
 use App\DTOs\MotorCycle\FindAllClientMotorCycleDTO;
+use App\DTOs\MotorCycle\UpdateClientMotorCycleDTO;
 use App\Enums\HttpStatusCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MotorCycle\CreateClientMotorCycleRequest;
 use App\Http\Requests\MotorCycle\FindAllClientMotorCycleRequest;
+use App\Http\Requests\MotorCycle\UpdateClientMotorCycleRequest;
 use App\Services\MotorCycle\MotorCycleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -87,5 +88,33 @@ class MotorCycleController extends Controller {
         };
 
         return $this->makeRequest('MOTORCYCLE.FIND_BY_ID', $findByIdResponse);
+    }
+
+    public function update(
+        UpdateClientMotorCycleRequest $request,
+        int $clientId,
+        int $motorcycleId,
+    ): JsonResponse {
+        $updateResponse = function () use ($request, $clientId, $motorcycleId) {
+            $user = Auth::user();
+            $motorcycleDTO = UpdateClientMotorCycleDTO::fromArray(
+                $request->validated(),
+            );
+
+            $motorcycle = $this->motorCycleService->update(
+                $user,
+                $motorcycleDTO,
+                $clientId,
+                $motorcycleId,
+            );
+
+            return self::makeHttpResponse(
+                'MOTORCYCLE.UPDATED',
+                HttpStatusCode::OK,
+                $motorcycle,
+            );
+        };
+
+        return $this->makeRequest('MOTORCYCLE.UPDATE', $updateResponse);
     }
 }
