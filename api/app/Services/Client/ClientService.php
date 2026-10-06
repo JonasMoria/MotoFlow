@@ -181,6 +181,21 @@ class ClientService {
         }
     }
 
+    public function delete(?User $user, int $clientId): array {
+        $this->validateUser($user);
+        $client = $this->getClient($user->id, $clientId);
+
+        $removed = $this->clientRepository->delete($client);
+
+        if ($client->avatar_path !== null) {
+            Storage::disk('public')->delete($client->avatar_path);
+        }
+
+        return [
+            'removed' => $removed,
+        ];
+    }
+
     private function validateUser(?User $user): void {
         if (!$user) {
             throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);

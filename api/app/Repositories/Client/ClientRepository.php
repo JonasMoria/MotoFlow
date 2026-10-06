@@ -54,4 +54,8 @@ class ClientRepository {
             ->whereKey($clientId)
             ->first();
     }
+
+    public function delete(ClientModel $client): ?bool {
+        return $client->delete();
+    }
 }

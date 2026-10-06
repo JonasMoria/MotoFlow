@@ -104,4 +104,23 @@ class ClientController extends Controller {
 
         return $this->makeRequest('CLIENT.UPDATE', $updateResponse);
     }
+
+    public function delete(int $clientId): JsonResponse {
+        $deleteResponse = function () use ($clientId) {
+            $user = Auth::user();
+
+            $clientRemoved = $this->clientService->delete(
+                $user,
+                $clientId,
+            );
+
+            return self::makeHttpResponse(
+                'CLIENT.DELETED',
+                HttpStatusCode::OK,
+                $clientRemoved,
+            );
+        };
+
+        return $this->makeRequest('CLIENT.DELETE', $deleteResponse);
+    }
 }
