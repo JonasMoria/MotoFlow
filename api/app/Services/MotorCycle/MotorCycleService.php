@@ -32,9 +32,7 @@ class MotorCycleService {
         int $clientId,
         CreateClientMotorCycleDTO $clientMotorCycleDTO,
     ): array {
-        if (!$user) {
-            throw new AppException('USER.UNAUTHENTICATED', HttpStatusCode::UNAUTHORIZED);
-        }
+        $this->validateUser($user);
 
         $isValidClient = $this->clientRepository->existsByIdAndUserId($clientId, $user->id);
         if (!$isValidClient) {
