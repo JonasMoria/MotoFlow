@@ -3,6 +3,7 @@
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\MotorCycle\MotorCycleController;
+use App\Http\Controllers\RepairOrder\RepairOrderController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,4 +29,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/motorcycle/{clientId}/{motorcycleId}', [MotorCycleController::class, 'findById']);
     Route::patch('/motorcycle/{clientId}/{motorcycleId}', [MotorCycleController::class, 'update']);
     Route::delete('/motorcycle/{clientId}/{motorcycleId}', [MotorCycleController::class, 'delete']);
+
+    Route::post('/repair-order/{motorcycleId}', [RepairOrderController::class, 'create']);
 });

@@ -65,4 +65,13 @@ class MotorCycleRepository {
     public function delete(MotorCycleModel $motorCycle): ?bool {
         return $motorCycle->delete();
     }
+
+    public function existsById(int $userId, int $motorcycleId): bool {
+        return MotorCycleModel::query()
+            ->where('id', $motorcycleId)
+            ->whereHas('client', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->exists();
+    }
 }
