@@ -7,7 +7,9 @@ use App\Exceptions\AppException;
 use App\Exceptions\FormRequestException;
 use App\Services\ApiLogger;
 use App\Traits\HttpResponse;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Throwable;
 
 abstract class Controller {
@@ -41,5 +43,18 @@ abstract class Controller {
                 HttpStatusCode::INTERNAL_SERVER_ERROR,
             );
         }
+    }
+
+    public function loadPDF(
+        string $view,
+        array $content,
+        string $paperFormat,
+        string $fileName,
+    ): Response {
+        $pdf = Pdf::loadView($view, $content)
+            ->setPaper($paperFormat)
+            ->download($fileName);
+
+        return $pdf;
     }
 }

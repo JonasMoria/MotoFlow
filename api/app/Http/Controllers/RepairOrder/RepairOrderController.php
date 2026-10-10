@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\RepairOrder;
 
 use App\Enums\HttpStatusCode;
+use App\Enums\PaperFormatCode;
+use App\Exceptions\AppException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RepairOrder\CreateRepairOrderRequest;
 use App\Mappers\RepairOrder\RepairOrderRequestMapper;
 use App\Services\RepairOrder\RepairOrderService;
+use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class RepairOrderController extends Controller {
@@ -127,5 +131,38 @@ class RepairOrderController extends Controller {
         };
 
         return $this->makeRequest('REPAIR_ORDER.DELETE', $deleteResponse);
+    }
+
+    public function download(int $repairOrderId): Response|string {
+        try {
+            $user = Auth::user();
+            $repairOrder = $this->repairOrderService->getRepairOrder($user, $repairOrderId);
+
+            return $this->loadPDF(
+                'pdf.repair-order',
+                [
+                    'repairOrder' => $repairOrder,
+                ],
+                PaperFormatCode::A4->label(),
+                "OS-{$repairOrderId}.pdf",
+            );
+
+        } catch (AppException $appException) {
+            return response()->json(
+                [
+                    'message' => $appException->getMessage(),
+                    'data' => null,
+                ],
+                $appException->getCode(),
+            );
+        } catch (Exception $th) {
+            return response()->json(
+                [
+                    'message' => 'SYSTEM.FATAL.ERROR',
+                    'data' => null,
+                ],
+                HttpStatusCode::INTERNAL_SERVER_ERROR->value,
+            );
+        }
     }
 }

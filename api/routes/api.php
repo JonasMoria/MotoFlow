@@ -35,4 +35,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/repair-order/{repairOrderId}', [RepairOrderController::class, 'get']);
     Route::post('/repair-order/{motorcycleId}/{repairOrderId}', [RepairOrderController::class, 'update']);
     Route::delete('/repair-order/{repairOrderId}', [RepairOrderController::class, 'delete']);
+    Route::get('/repair-order/{repairOrderId}/download', [RepairOrderController::class, 'download']);
 });
