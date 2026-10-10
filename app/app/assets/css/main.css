@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+    color-scheme: light;
+
+    --color-brand: #0F3B82;
+    --color-brand-hover: #0B2F68;
+    --color-accent: #FF8A00;
+
+    --color-sidebar: #1F2937;
+    --color-background: #F1F5F9;
+    --color-surface: #FFFFFF;
+    --color-border: #E2E8F0;
+    --color-text: #1F2937;
+    --color-text-muted: #6B7280;
+
+    --color-success: #15803D;
+    --color-info: #1D4ED8;
+    --color-warning: #92400E;
+    --color-danger: #B91C1C;
+
+    --color-status-created-bg: #DBEAFE;
+    --color-status-created-text: #1D4ED8;
+    --color-status-waiting-bg: #FEF3C7;
+    --color-status-waiting-text: #92400E;
+    --color-status-in-progress-bg: #FFEDD5;
+    --color-status-in-progress-text: #9A3412;
+    --color-status-pickup-bg: #DCFCE7;
+    --color-status-pickup-text: #166534;
+
+    --color-focus-ring: #2563EB;
+    --radius-control: 0.5rem;
+}
+
+@theme {
+    --color-brand: #0F3B82;
+    --color-brand-hover: #0B2F68;
+    --color-accent: #FF8A00;
+    --color-sidebar: #1F2937;
+    --color-background: #F1F5F9;
+    --color-surface: #FFFFFF;
+    --color-border: #E2E8F0;
+    --color-foreground: #1F2937;
+    --color-muted: #6B7280;
+    --color-success: #15803D;
+    --color-info: #1D4ED8;
+    --color-warning: #92400E;
+    --color-danger: #B91C1C;
+}
