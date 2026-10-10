@@ -5,6 +5,16 @@ const ApiMessages = Object.freeze({
     'FORM.LOGIN.PASSWORD.REQUIRED': 'Informe sua senha.',
     'FORM.LOGIN.PASSWORD.INVALID': 'A senha informada é inválida.',
     'USER.LOGIN.INVALID_CREDENTIALS': 'E-mail ou senha incorretos.',
+
+    'FORM.LOGIN.EMAIL.REQUIRED': 'Informe seu e-mail.',
+    'FORM.LOGIN.EMAIL.INVALID': 'Informe um endereço de e-mail válido.',
+    'FORM.LOGIN.PASSWORD.REQUIRED': 'Informe sua senha.',
+    'FORM.LOGIN.PASSWORD.INVALID': 'A senha informada é inválida.',
+    'FORM.LOGIN.CODE.REQUIRED': 'Informe o código de verificação.',
+    'FORM.LOGIN.CODE.INVALID': 'O código de verificação deve conter apenas texto válido.',
+    'FORM.LOGIN.CODE.SIZE': 'O código de verificação deve conter exatamente seis dígitos.',
+    'USER.LOGIN.INVALID_CREDENTIALS': 'E-mail ou senha incorretos.',
+    'USER.LOGIN.CODE.INVALID': 'Código Inválido.',
 })
 
 export function getApiMessage(flag) {

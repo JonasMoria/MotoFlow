@@ -124,7 +124,9 @@ async function handleSubmit() {
             password: password.value,
         })
 
-        await navigateTo('/two-factor')
+        sessionStorage.setItem('motoflow_login_email', email.value.trim())
+
+        await navigateTo('/verificar-codigo')
     } catch (error) {
         const status = error.response?.status
         const flag = error.response?.data?.message
