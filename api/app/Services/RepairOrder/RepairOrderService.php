@@ -116,6 +116,57 @@ class RepairOrderService {
         return $report;
     }
 
+    /**
+     * @param CreateRepairOrderPartDTO[] $repairOrderPartsList
+     * @param CreateRepairOrderServiceDTO[] $repairOrderServicesList
+     */
+    public function updateRepairOrder(
+        ?User $user,
+        int $motorcycleId,
+        int $repairOrderId,
+        CreateRepairOrderDTO $repairOrder,
+        array $repairOrderPartsList,
+        array $repairOrderServicesList,
+    ): array {
+        $this->validateUser($user);
+
+        $oldRepair = $this->findAndValidateRepairOrder(
+            $user->id,
+            $repairOrderId,
+        );
+
+        $repair = $this->createRepairOrder(
+            $user,
+            $motorcycleId,
+            $repairOrder,
+            $repairOrderPartsList,
+            $repairOrderServicesList,
+        );
+
+        $this->repairOrderRepository->delete($oldRepair);
+
+        return [
+            'id' => $repair['id'],
+        ];
+    }
+
+    public function removeRepair(
+        ?User $user,
+        int $repairOrderid,
+    ): array {
+        $this->validateUser($user);
+        $repair = $this->findAndValidateRepairOrder(
+            $user->id,
+            $repairOrderid,
+        );
+
+        $removed = $this->repairOrderRepository->delete($repair);
+
+        return [
+            'removed' => $removed,
+        ];
+    }
+
     private function validateUser(?User $user): void {
         if (!$user) {
             throw new AppException(
@@ -150,5 +201,21 @@ class RepairOrderService {
             $motorcycleId,
             $repairOrder,
         );
+    }
+
+    private function findAndValidateRepairOrder(
+        int $userId,
+        int $repairOrderId,
+    ): RepairOrderModel {
+        $repair = $this->repairOrderRepository->findById(
+            $userId,
+            $repairOrderId,
+        );
+
+        if ($repair === null) {
+            throw new AppException('REPAIR_ORDER.NOT_FOUND', HttpStatusCode::NOT_FOUND);
+        }
+
+        return $repair;
     }
 }

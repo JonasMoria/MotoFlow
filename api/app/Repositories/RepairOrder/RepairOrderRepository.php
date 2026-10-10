@@ -143,4 +143,21 @@ class RepairOrderRepository {
             ? (array) $repair
             : null;
     }
+
+    public function findById(int $userId, int $repairOrderId): ?RepairOrderModel {
+        return RepairOrderModel::query()
+            ->whereKey($repairOrderId)
+            ->whereHas(
+                'motorcycle',
+                fn ($query) => $query->whereHas(
+                    'client',
+                    fn ($query) => $query->where('user_id', $userId),
+                ),
+            )
+            ->first();
+    }
+
+    public function delete(RepairOrderModel $repairOrder): ?bool {
+        return $repairOrder->delete();
+    }
 }

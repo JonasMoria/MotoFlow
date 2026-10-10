@@ -77,4 +77,55 @@ class RepairOrderController extends Controller {
 
         return $this->makeRequest('REPAIR.GET', $repairResponse);
     }
+
+    public function update(
+        int $motorcycleId,
+        int $repairOrderId,
+        CreateRepairOrderRequest $request,
+    ): JsonResponse {
+        $updateResponse = function () use ($motorcycleId, $repairOrderId, $request) {
+            $user = Auth::user();
+            $data = $request->validated();
+
+            $repairOrder = RepairOrderRequestMapper::toCreateDTO($data);
+            $parts = RepairOrderRequestMapper::toPartsDTOList($data['parts'] ?? []);
+            $services = RepairOrderRequestMapper::toServicesDTOList($data['services'] ?? []);
+
+            $response = $this->repairOrderService->updateRepairOrder(
+                $user,
+                $motorcycleId,
+                $repairOrderId,
+                $repairOrder,
+                $parts,
+                $services,
+            );
+
+            return self::makeHttpResponse(
+                'REPAIR_ORDER.UPDATE.DONE',
+                HttpStatusCode::CREATED,
+                $response,
+            );
+        };
+
+        return $this->makeRequest('REPAIR_ORDER.UPDATE', $updateResponse);
+    }
+
+    public function delete(int $repairOrderId): JsonResponse {
+        $deleteResponse = function () use ($repairOrderId) {
+            $user = Auth::user();
+
+            $response = $this->repairOrderService->removeRepair(
+                $user,
+                $repairOrderId,
+            );
+
+            return self::makeHttpResponse(
+                'REPAIR_ORDER.DELETE.DONE',
+                HttpStatusCode::CREATED,
+                $response,
+            );
+        };
+
+        return $this->makeRequest('REPAIR_ORDER.DELETE', $deleteResponse);
+    }
 }
