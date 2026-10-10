@@ -61,4 +61,20 @@ class RepairOrderController extends Controller {
 
         return $this->makeRequest('REPAIR.LIST.DONE', $listResponse);
     }
+
+    public function get(int $repairOrderId): JsonResponse {
+        $repairResponse = function () use ($repairOrderId) {
+            $user = Auth::user();
+
+            $repair = $this->repairOrderService->getRepairOrder($user, $repairOrderId);
+
+            return self::makeHttpResponse(
+                'REPAIR.GET.OK',
+                HttpStatusCode::OK,
+                $repair,
+            );
+        };
+
+        return $this->makeRequest('REPAIR.GET', $repairResponse);
+    }
 }

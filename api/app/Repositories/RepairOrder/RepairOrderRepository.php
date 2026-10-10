@@ -79,4 +79,68 @@ class RepairOrderRepository {
             ->get()
             ->toArray();
     }
+
+    public function getById(int $userId, int $repairOrderId): ?array {
+        $repair = DB::table('repair_order AS RO')
+            ->join(
+                'clients_motorcycles AS CM',
+                'CM.id',
+                '=',
+                'RO.motorcycle_id',
+            )
+            ->join(
+                'users_clients AS UC',
+                'UC.id',
+                '=',
+                'CM.client_id',
+            )
+            ->where(
+                'RO.id',
+                $repairOrderId,
+            )
+            ->where(
+                'UC.user_id',
+                $userId,
+            )
+            ->select([
+                // Ordem de serviço
+                'RO.id',
+                'RO.motorcycle_id',
+                'RO.status',
+                'RO.urgency_level',
+                'RO.title',
+                'RO.description',
+                'RO.diagnosis',
+                'RO.observations',
+                'RO.started_at',
+                'RO.finished_at',
+                'RO.delivered_at',
+                'RO.created_at',
+                'RO.updated_at',
+
+                // Motocicleta
+                'CM.brand as motorcycle_brand',
+                'CM.model as motorcycle_model',
+                'CM.plate as motorcycle_plate',
+                'CM.renavam as motorcycle_renavam',
+                'CM.chassis as motorcycle_chassis',
+                'CM.year as motorcycle_year',
+                'CM.color as motorcycle_color',
+                'CM.engine_number as motorcycle_engine_number',
+
+                // Cliente
+                'UC.id as client_id',
+                'UC.name as client_name',
+                'UC.phone as client_phone',
+                'UC.email as client_email',
+                'UC.document as client_document',
+                'UC.address as client_address',
+                'UC.avatar_path as profile_photo',
+            ])
+            ->first();
+
+        return $repair !== null
+            ? (array) $repair
+            : null;
+    }
 }

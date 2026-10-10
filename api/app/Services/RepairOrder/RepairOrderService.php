@@ -7,6 +7,7 @@ use App\DTOs\RepairOrder\CreateRepairOrderPartDTO;
 use App\DTOs\RepairOrder\CreateRepairOrderServiceDTO;
 use App\Enums\HttpStatusCode;
 use App\Exceptions\AppException;
+use App\Mappers\RepairOrder\RepairOrderReportMapper;
 use App\Models\RepairOrder\RepairOrderModel;
 use App\Models\User\User;
 use App\Repositories\MotorCycle\MotorCycleRepository;
@@ -91,6 +92,28 @@ class RepairOrderService {
         $repairs = $this->repairOrderRepository->listActives($user->id);
 
         return $repairs;
+    }
+
+    public function getRepairOrder(?User $user, int $repairOrderId): array {
+        $this->validateUser($user);
+
+        $repair = $this->repairOrderRepository->getById($user->id, $repairOrderId);
+        if ($repair === null) {
+            throw new AppException('REPAIR.NOT.FOUND', HttpStatusCode::NOT_FOUND);
+        }
+
+        $repairId = (int) $repair['id'];
+
+        $parts = $this->repairOrderPartRepository->getAllByRepairId($repairId);
+        $services = $this->repairOrderServiceRepository->getAllByRepairId($repairId);
+
+        $report = RepairOrderReportMapper::toArray(
+            $repair,
+            $parts,
+            $services,
+        );
+
+        return $report;
     }
 
     private function validateUser(?User $user): void {

@@ -31,4 +31,21 @@ class RepairOrderServiceRepository {
 
         DB::table('repair_order_services')->insert($data);
     }
+
+    public function getAllByRepairId(int $repairOrderId): array {
+        return DB::table('repair_order_services')
+            ->where(
+                'repair_order_id',
+                $repairOrderId,
+            )
+            ->select([
+                'id AS repair_service_id',
+                'name AS repair_service_name',
+                'description AS repair_service_description',
+                'quantity AS repair_service_quantity',
+                'unit_value AS repair_service_unit_value',
+            ])
+            ->get()
+            ->all();
+    }
 }
