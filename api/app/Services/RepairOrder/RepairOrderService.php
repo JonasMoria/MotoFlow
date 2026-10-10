@@ -7,6 +7,7 @@ use App\DTOs\RepairOrder\CreateRepairOrderPartDTO;
 use App\DTOs\RepairOrder\CreateRepairOrderServiceDTO;
 use App\Enums\HttpStatusCode;
 use App\Exceptions\AppException;
+use App\Mail\RepairOrder\RepairOrderToClientMail;
 use App\Mappers\RepairOrder\RepairOrderReportMapper;
 use App\Models\RepairOrder\RepairOrderModel;
 use App\Models\User\User;
@@ -15,6 +16,7 @@ use App\Repositories\RepairOrder\RepairOrderPartRepository;
 use App\Repositories\RepairOrder\RepairOrderRepository;
 use App\Repositories\RepairOrder\RepairOrderServiceRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class RepairOrderService {
     private RepairOrderRepository $repairOrderRepository;
@@ -164,6 +166,35 @@ class RepairOrderService {
 
         return [
             'removed' => $removed,
+        ];
+    }
+
+    public function sendRepairOrderToClient(
+        ?User $user,
+        int $repairOrderId,
+    ): array {
+        $this->validateUser($user);
+
+        $repairOrder = $this->getRepairOrder($user, $repairOrderId);
+
+        $clientEmail = $repairOrder['client']['email'] ?? null;
+        if (!is_string($clientEmail) || filter_var($clientEmail, FILTER_VALIDATE_EMAIL) === false) {
+            throw new AppException(
+                'REPAIR_ORDER.CLIENT.EMAIL.INVALID',
+                HttpStatusCode::UNPROCESSABLE_ENTITY,
+            );
+        }
+
+        Mail::to($clientEmail)->queue(
+            new RepairOrderToClientMail(
+                repairOrder: $repairOrder,
+            ),
+        );
+
+        return [
+            'queued' => true,
+            'repair_order_id' => $repairOrderId,
+            'recipient' => $clientEmail,
         ];
     }
 

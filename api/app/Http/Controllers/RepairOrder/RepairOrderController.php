@@ -165,4 +165,23 @@ class RepairOrderController extends Controller {
             );
         }
     }
+
+    public function sentToClient(int $repairOrderId): JsonResponse {
+        $sendResponse = function () use ($repairOrderId) {
+            $user = Auth::user();
+
+            $response = $this->repairOrderService->sendRepairOrderToClient(
+                $user,
+                $repairOrderId,
+            );
+
+            return self::makeHttpResponse(
+                'REPAIR_ORDER.SENT.DONE',
+                HttpStatusCode::ACCEPTED,
+                $response,
+            );
+        };
+
+        return $this->makeRequest('REPAIR_ORDER.SENT', $sendResponse);
+    }
 }
