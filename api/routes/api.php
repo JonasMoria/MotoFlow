@@ -31,4 +31,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/motorcycle/{clientId}/{motorcycleId}', [MotorCycleController::class, 'delete']);
 
     Route::post('/repair-order/{motorcycleId}', [RepairOrderController::class, 'create']);
+    Route::get('/repair-order/list-actives', [RepairOrderController::class, 'listActive']);
 });

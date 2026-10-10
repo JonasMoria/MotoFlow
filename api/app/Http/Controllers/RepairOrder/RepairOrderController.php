@@ -45,4 +45,20 @@ class RepairOrderController extends Controller {
 
         return $this->makeRequest('REPAIR_ORDER.CREATE', $createResponse);
     }
+
+    public function listActive(): JsonResponse {
+        $listResponse = function () {
+            $user = Auth::user();
+
+            $repairs = $this->repairOrderService->listActiveRepairs($user);
+
+            return self::makeHttpResponse(
+                'REPAIR.ACTIVE.LIST',
+                HttpStatusCode::OK,
+                $repairs,
+            );
+        };
+
+        return $this->makeRequest('REPAIR.LIST.DONE', $listResponse);
+    }
 }

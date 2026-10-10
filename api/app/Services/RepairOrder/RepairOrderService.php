@@ -85,6 +85,14 @@ class RepairOrderService {
         });
     }
 
+    public function listActiveRepairs(?User $user): array {
+        $this->validateUser($user);
+
+        $repairs = $this->repairOrderRepository->listActives($user->id);
+
+        return $repairs;
+    }
+
     private function validateUser(?User $user): void {
         if (!$user) {
             throw new AppException(
