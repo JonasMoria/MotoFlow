@@ -16,7 +16,7 @@
                 <img v-if="avatarPreview" :src="avatarPreview" alt="Pré-visualização do avatar"
                     class="h-full w-full object-cover" />
 
-                <img v-else-if="client?.avatar_path" :src="client.avatar_path" alt="Avatar do cliente"
+                <img v-else-if="avatarUrl" :src="avatarUrl" alt="Avatar do cliente"
                     class="h-full w-full object-cover" />
 
                 <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -181,6 +181,22 @@ const emit = defineEmits(['submit', 'cancel'])
 const avatar = ref(null)
 const avatarPreview = ref(null)
 const avatarError = ref('')
+
+const config = useRuntimeConfig()
+const avatarUrl = computed(() => {
+    if (!props.client?.avatar_path) {
+        return null
+    }
+
+    const apiBaseUrl = config.public.apiBaseUrl || ''
+    const baseUrl = apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
+    const path = props.client.avatar_path
+        .split('/')
+        .map((segment) => encodeURIComponent(segment))
+        .join('/')
+
+    return `${baseUrl}/storage/${path}`
+})
 
 const isEditing = computed(() => Boolean(props.client?.id))
 
