@@ -266,7 +266,8 @@ async function handleSubmit(client) {
             })
         }
 
-        const httpStatus = response.httpStatus
+        const httpStatus = response.status;
+
         const isCreated = !selectedClient.value
             && httpStatus === HttpStatus.CREATED
         const isUpdated = Boolean(selectedClient.value)
