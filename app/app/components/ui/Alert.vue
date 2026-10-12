@@ -27,11 +27,13 @@
             </template>
         </svg>
 
-        <div class="min-w-0 flex-1 wrap-break-word">
+        <div class="min-w-0 flex-1 wrap-break-word mt-1 flex">
             <p v-if="title" class="font-semibold">
                 {{ title }}
             </p>
-
+            <p v-if="message" class="ml-2">
+                {{ message }}
+            </p>
             <div v-if="$slots.default" class="leading-6" :class="{ 'mt-1': title }">
                 <slot />
             </div>
@@ -63,9 +65,13 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    message: {
+        type: String,
+        default: '',
+    },
     dismissible: {
         type: Boolean,
-        default: false,
+        default: true,
     },
 })
 

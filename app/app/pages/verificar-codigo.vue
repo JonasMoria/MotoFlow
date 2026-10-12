@@ -192,7 +192,7 @@ export default {
                     code: this.code,
                 })
 
-                const token = response.data?.token
+                const token = response.data?.data?.token
 
                 if (!token) {
                     this.errorMessage =
