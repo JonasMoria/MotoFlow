@@ -90,7 +90,6 @@
             </template>
         </div>
 
-        <!-- Cadastro / edição -->
         <Modal v-model="modalOpen" :title="selectedClient ? 'Editar Cliente' : 'Cadastrar Cliente'" :description="selectedClient
             ? 'Atualize os dados do cliente.'
             : 'Preencha os dados para cadastrar um novo cliente.'
@@ -98,12 +97,17 @@
             <ClientForm :key="selectedClient?.id ?? 'new-client'" :client="selectedClient" :loading="saving"
                 :errors="formErrors" :reset-key="formResetKey" @submit="handleSubmit" @cancel="closeModal" />
         </Modal>
+
+        <ConfirmationModal v-model="confirmationOpen" title="Excluir cliente" :message="`Tem certeza de que deseja excluir o cliente '${clientToDelete?.name ?? ''}'? Esta ação não poderá ser desfeita.`
+            " confirm-text="Sim, excluir" cancel-text="Cancelar" loading-text="Excluindo..." :loading="deletingClient"
+            @confirm="confirmDeleteClient" @cancel="cancelDeleteClient" />
     </section>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import Alert from '~/components/ui/Alert.vue'
+import ConfirmationModal from '~/components/ui/ConfirmationModal.vue'
 import Modal from '~/components/ui/Modal.vue'
 import ClientCard from '~/features/clients/components/ClientCard.vue'
 import ClientForm from '~/features/clients/components/ClientForm.vue'
@@ -136,6 +140,10 @@ const selectedClient = ref(null)
 const clients = ref([])
 const loadingClients = ref(false)
 const clientsError = ref('')
+
+const confirmationOpen = ref(false)
+const deletingClient = ref(false)
+const clientToDelete = ref(null)
 
 const pagination = ref({
     current_page: 1,
@@ -323,16 +331,26 @@ function changePage(page) {
     fetchClients(page)
 }
 
-async function handleDelete(client) {
-    const confirmed = window.confirm(
-        `Deseja realmente excluir o cliente "${client.name}"?`,
-    )
+function handleDelete(client) {
+    clientToDelete.value = client
+    confirmationOpen.value = true
+}
 
-    if (!confirmed) {
+function cancelDeleteClient() {
+    if (deletingClient.value) {
         return
     }
 
-    alert.value.visible = false
+    confirmationOpen.value = false
+    clientToDelete.value = null
+}
+
+async function confirmDeleteClient() {
+    if (!clientToDelete.value || deletingClient.value) {
+        return
+    }
+
+    deletingClient.value = true
 
     try {
         const token = sessionStorage.getItem('motoflow_access_token')
@@ -343,14 +361,17 @@ async function handleDelete(client) {
                 variant: AlertVariant.ERROR,
                 message: getApiMessage('USER.UNAUTHENTICATED'),
             }
+
             return
         }
 
-        await $api.delete(`/client/${client.id}`, {
+        await $api.delete(`/client/${clientToDelete.value.id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         })
+
+        confirmationOpen.value = false
 
         alert.value = {
             visible: true,
@@ -358,18 +379,22 @@ async function handleDelete(client) {
             message: 'Cliente excluído com sucesso.',
         }
 
-        const currentPage = pagination.value.current_page
-        const nextPage = clients.value.length === 1 && currentPage > 1
-            ? currentPage - 1
-            : currentPage
+        const page = clients.value.length === 1
+            && pagination.value.current_page > 1
+            ? pagination.value.current_page - 1
+            : pagination.value.current_page
 
-        await fetchClients(nextPage)
+        clientToDelete.value = null
+
+        await fetchClients(page)
     } catch (error) {
         alert.value = {
             visible: true,
             variant: AlertVariant.ERROR,
             message: getApiMessage(error.response?.data?.message),
         }
+    } finally {
+        deletingClient.value = false
     }
 }
 </script>
