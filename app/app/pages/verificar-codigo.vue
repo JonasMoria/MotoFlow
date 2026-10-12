@@ -203,7 +203,7 @@ export default {
                 sessionStorage.setItem('motoflow_access_token', token)
                 sessionStorage.removeItem('motoflow_login_email')
 
-                await navigateTo('/dashboard', { replace: true })
+                await navigateTo('/painel/servicos', { replace: true })
             } catch (error) {
                 const flag = error.response?.data?.message
                 const status = error.response?.status
