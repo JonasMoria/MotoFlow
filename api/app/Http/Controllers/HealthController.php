@@ -24,7 +24,7 @@ class HealthController extends Controller {
         try {
             $healthData = $this->healthService->getAppStatus();
 
-            return $this->makeResponse(
+            return $this->makeHttpResponse(
                 'APP.STATUS.OK',
                 HttpStatusCode::OK,
                 $healthData,
@@ -32,7 +32,7 @@ class HealthController extends Controller {
         } catch (Throwable $th) {
             $this->logger->error('APP.HEALTH', $th);
 
-            return $this->makeResponse(
+            return $this->makeHttpResponse(
                 'APP.STATUS.HAS.PROBLEM',
                 HttpStatusCode::INTERNAL_SERVER_ERROR,
             );
