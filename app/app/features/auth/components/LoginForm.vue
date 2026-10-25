@@ -13,7 +13,8 @@
             </p>
         </div>
 
-        <Alert v-if="errorMessage" :variant="AlertVariant.ERROR" title="Não foi possível entrar" role="alert">
+        <Alert v-if="errorMessage" @close="errorMessage = ''" :variant="AlertVariant.ERROR"
+            title="Não foi possível entrar" role="alert">
             {{ errorMessage }}
         </Alert>
 

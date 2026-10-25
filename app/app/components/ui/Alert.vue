@@ -27,14 +27,16 @@
             </template>
         </svg>
 
-        <div class="min-w-0 flex-1 wrap-break-word mt-1 flex">
-            <p v-if="title" class="font-semibold">
+        <div class="min-w-0 flex-1">
+            <p v-if="title" class="font-semibold leading-5">
                 {{ title }}
             </p>
-            <p v-if="message" class="ml-2">
+
+            <p v-if="message" class="wrap-break-words leading-5" :class="{ 'mt-1': title }">
                 {{ message }}
             </p>
-            <div v-if="$slots.default" class="leading-6" :class="{ 'mt-1': title }">
+
+            <div v-if="$slots.default" class="leading-5" :class="{ 'mt-1': title || message }">
                 <slot />
             </div>
         </div>
@@ -49,7 +51,6 @@
         </button>
     </div>
 </template>
-
 
 <script setup>
 import { computed } from 'vue'
