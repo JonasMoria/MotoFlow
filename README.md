@@ -17,9 +17,6 @@ A ideia é permitir o gerenciamento de:
 - 👤 Clientes
 - 🏍️ Motocicletas
 - 🔧 Serviços
-- 💰 Valores e pagamentos
-- 📊 Histórico de manutenção
-- 📈 Indicadores da oficina
 
 O sistema será desenvolvido de forma modular, permitindo que novas funcionalidades sejam adicionadas conforme o projeto evolui.
 
