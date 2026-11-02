@@ -106,7 +106,7 @@ class RepairOrderController extends Controller {
 
             return self::makeHttpResponse(
                 'REPAIR_ORDER.UPDATE.DONE',
-                HttpStatusCode::CREATED,
+                HttpStatusCode::OK,
                 $response,
             );
         };
@@ -125,7 +125,7 @@ class RepairOrderController extends Controller {
 
             return self::makeHttpResponse(
                 'REPAIR_ORDER.DELETE.DONE',
-                HttpStatusCode::CREATED,
+                HttpStatusCode::OK,
                 $response,
             );
         };
