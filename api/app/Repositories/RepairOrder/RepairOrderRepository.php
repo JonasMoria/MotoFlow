@@ -71,6 +71,7 @@ class RepairOrderRepository {
                 'clients_motorcycles.color AS motorcycle_color',
                 'clients_motorcycles.plate AS motorcycle_plate',
 
+                'users_clients.id AS client_id',
                 'users_clients.name AS client_name',
                 'users_clients.phone AS client_phone',
                 'users_clients.avatar_path AS profile_photo',
