@@ -1,9 +1,19 @@
-openapi: 3.0.3
+
+openapi: 3.1.0
 
 info:
   title: MotoFlow API
-  description: API para gerenciamento de oficinas de motocicletas.
   version: 1.0.0
+  description: |
+    API REST do MotoFlow, sistema de gerenciamento de oficinas de motocicletas.
+
+    Todas as respostas seguem o envelope:
+      {
+        "message": "MESSAGE.FLAG",
+        "data": {}
+      }
+
+    A autenticação utiliza Laravel Sanctum com Bearer Token.
 
 servers:
   - url: http://localhost:8080/api
@@ -11,435 +21,1526 @@ servers:
 
 tags:
   - name: Health
-    description: Verificação de disponibilidade da API
+    description: Verificação da disponibilidade da API
+  - name: Authentication
+    description: Autenticação e gerenciamento de sessões
+  - name: Clients
+    description: Gerenciamento de clientes
+  - name: Motorcycles
+    description: Gerenciamento de motocicletas
+  - name: Repair Orders
+    description: Gerenciamento de ordens de serviço
 
-  - name: Autenticação
-    description: Endpoints relacionados à autenticação dos usuários
+security:
+  - BearerAuth: []
 
 paths:
+
+  # ==================================================
+  # HEALTH
+  # ==================================================
 
   /health:
     get:
       tags:
         - Health
-      summary: Verifica a disponibilidade da API
-      description: Retorna o estado atual da API.
-      operationId: healthCheck
-
+      summary: Verificar disponibilidade da API
+      security: []
       responses:
         '200':
           description: API disponível
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # ==================================================
+  # AUTHENTICATION
+  # ==================================================
 
   /login:
     post:
       tags:
-        - Autenticação
-      summary: Realiza o login do usuário
-      description: Inicia o processo de autenticação do usuário.
-      operationId: login
-
+        - Authentication
+      summary: Realizar login
+      description: |
+        Valida as credenciais do usuário e inicia o processo de
+        autenticação em duas etapas.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - email
-                - password
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: E-mail utilizado para autenticação
-                  example: usuario@motoflow.com
-
-                password:
-                  type: string
-                  format: password
-                  description: Senha do usuário
-                  example: secret
-
+              $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login iniciado com sucesso
-
-        '401':
-          description: Credenciais inválidas
-
+          description: Login realizado e código de verificação gerado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccessResponse'
         '422':
-          description: Dados de entrada inválidos
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /login/verify:
     post:
       tags:
-        - Autenticação
-      summary: Verifica o código de autenticação
-      description: >
-        Valida o código de autenticação de dois fatores enviado ao usuário
-        após o login. Quando o código é válido, utilizado pela primeira vez
-        e ainda está dentro do prazo de validade, a autenticação é concluída
-        e um token de acesso Sanctum é gerado.
-      operationId: verifyLogin
-
+        - Authentication
+      summary: Verificar código de autenticação
+      description: |
+        Verifica o código de segundo fator enviado ao usuário
+        e retorna o token de acesso.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - email
-                - code
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: E-mail utilizado na tentativa de login
-                  example: usuario@motoflow.com
-
-                code:
-                  type: string
-                  description: Código de autenticação de dois fatores recebido pelo usuário
-                  example: "123456"
-
+              $ref: '#/components/schemas/LoginVerifyRequest'
       responses:
         '200':
-          description: Código validado e autenticação concluída
+          description: Código verificado e token gerado.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: USER.LOGIN.SUCCESS
-
-                  data:
-                    type: object
-                    properties:
-                      token:
-                        type: string
-                        description: Token de acesso gerado pelo Laravel Sanctum
-                        example: 1|abcdefghijklmnopqrstuvwxyz123456
-
-                      token_type:
-                        type: string
-                        example: Bearer
-
-        '401':
-          description: Código inválido ou credenciais inválidas
-
+                $ref: '#/components/schemas/LoginVerifySuccessResponse'
         '422':
-          description: Dados de entrada inválidos
-
-        '403':
-          description: Código expirado ou número máximo de tentativas excedido
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /logout:
     post:
       tags:
-        - Autenticação
-      summary: Encerra a sessão atual
-      description: >
-        Revoga o token de acesso Sanctum utilizado na requisição,
-        encerrando somente a sessão atual do usuário.
-      operationId: logout
-
-      security:
-        - bearerAuth: []
-
+        - Authentication
+      summary: Encerrar sessão atual
+      description: Encerra a sessão/token de autenticação atual.
       responses:
         '200':
-          description: Sessão encerrada com sucesso
+          description: Sessão encerrada.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: USER.LOGOUT.DONE
-
-                  data:
-                    nullable: true
-                    example: null
-
+                $ref: '#/components/schemas/ApiResponse'
         '401':
-          description: Token de acesso ausente, inválido ou expirado
+          $ref: '#/components/responses/Unauthorized'
 
   /logout-all:
     post:
       tags:
-        - Autenticação
-      summary: Encerra todas as sessões do usuário
-      description: >
-        Revoga todos os tokens de acesso Sanctum associados ao usuário,
-        encerrando todas as sessões ativas em todos os dispositivos.
-      operationId: logoutAll
-
-      security:
-        - bearerAuth: []
-
+        - Authentication
+      summary: Encerrar todas as sessões
+      description: Revoga todos os tokens de autenticação do usuário.
       responses:
         '200':
-          description: Todas as sessões foram encerradas com sucesso
+          description: Todas as sessões foram encerradas.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: USER.LOGOUT.ALL.DONE
-
-                  data:
-                    nullable: true
-                    example: null
-
+                $ref: '#/components/schemas/ApiResponse'
         '401':
-          description: Token de acesso ausente, inválido ou expirado
+          $ref: '#/components/responses/Unauthorized'
 
-  /clients:
+  # ==================================================
+  # CLIENTS
+  # ==================================================
+
+  /client:
     post:
       tags:
-        - Clientes
-      summary: Cadastra um novo cliente
-      description: >
-        Cadastra um novo cliente vinculado ao usuário autenticado.
-        O telefone e o documento são normalizados antes de serem armazenados.
-
-      operationId: createClient
-
-      security:
-        - bearerAuth: []
-
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - phone
-              properties:
-                name:
-                  type: string
-                  maxLength: 255
-                  description: Nome completo do cliente
-                  example: João da Silva
-
-                phone:
-                  type: string
-                  description: >
-                    Número de celular brasileiro. Pode ser informado
-                    com máscara ou apenas números.
-                  example: "(19) 98765-4321"
-
-                email:
-                  type: string
-                  format: email
-                  nullable: true
-                  maxLength: 255
-                  description: E-mail do cliente
-                  example: joao@email.com
-
-                document:
-                  type: string
-                  nullable: true
-                  maxLength: 20
-                  description: Documento do cliente, como CPF ou CNPJ
-                  example: "123.456.789-00"
-
-                address:
-                  type: string
-                  nullable: true
-                  description: Endereço do cliente
-                  example: Rua das Flores, 100
-
-            example:
-              name: João da Silva
-              phone: "(19) 98765-4321"
-              email: joao@email.com
-              document: "123.456.789-00"
-              address: Rua das Flores, 100
-
-      responses:
-        '201':
-          description: Cliente cadastrado com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: CLIENT.CREATE.SUCCESS
-
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        description: Identificador do cliente
-                        example: 1
-
-                      avatar_path:
-                        type: string
-                        nullable: true
-                        description: Caminho da foto do cliente
-                        example: null
-
-        '401':
-          description: Usuário não autenticado
-
-        '422':
-          description: Dados de entrada inválidos
-
-  /api/motorcycle/{clientId}:
-    post:
-      tags:
-        - Motocicletas
-      summary: Cadastrar motocicleta para um cliente
+        - Clients
+      summary: Cadastrar cliente
       description: |
-        Cadastra uma nova motocicleta vinculada a um cliente.
+        Cadastra um cliente. A imagem de perfil é enviada
+        utilizando multipart/form-data.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '201':
+          description: Cliente cadastrado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 
-        O cliente informado no parâmetro `clientId` deve existir e
-        pertencer ao usuário autenticado.
-
-        A placa e o RENAVAM são normalizados antes da persistência.
-      operationId: createClientMotorCycle
-      security:
-        - bearerAuth: []
-
+    get:
+      tags:
+        - Clients
+      summary: Listar clientes
+      description: Retorna os clientes cadastrados pelo usuário com paginação.
       parameters:
-        - name: clientId
-          in: path
-          required: true
-          description: ID do cliente ao qual a motocicleta será vinculada.
-          schema:
-            type: integer
-            example: 15
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Clientes encontrados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 
+  /client/{clientId}:
+    parameters:
+      - $ref: '#/components/parameters/ClientId'
+
+    get:
+      tags:
+        - Clients
+      summary: Buscar cliente por ID
+      responses:
+        '200':
+          description: Cliente encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Clients
+      summary: Atualizar cliente
+      description: |
+        Atualiza os dados do cliente. Somente os campos enviados
+        serão atualizados. A imagem utiliza multipart/form-data.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        '200':
+          description: Cliente atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags:
+        - Clients
+      summary: Excluir cliente
+      responses:
+        '200':
+          description: Cliente excluído.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================================================
+  # MOTORCYCLES
+  # ==================================================
+
+  /motorcycle/{clientId}:
+    parameters:
+      - $ref: '#/components/parameters/ClientId'
+
+    post:
+      tags:
+        - Motorcycles
+      summary: Cadastrar motocicleta
+      description: Cadastra uma motocicleta vinculada ao cliente informado.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - brand
-                - model
-                - plate
-              properties:
-                brand:
-                  type: string
-                  maxLength: 100
-                  example: Honda
-
-                model:
-                  type: string
-                  maxLength: 100
-                  example: CG 160 Titan
-
-                plate:
-                  type: string
-                  maxLength: 10
-                  example: ABC-1D23
-
-                renavam:
-                  type: string
-                  nullable: true
-                  maxLength: 11
-                  example: "12345678901"
-
-                chassis:
-                  type: string
-                  nullable: true
-                  maxLength: 17
-                  example: 9C2KC0810FR123456
-
-                year:
-                  type: integer
-                  nullable: true
-                  minimum: 1900
-                  example: 2024
-
-                color:
-                  type: string
-                  nullable: true
-                  maxLength: 50
-                  example: Preto
-
-                engine_number:
-                  type: string
-                  nullable: true
-                  maxLength: 50
-                  example: KC08E1F123456
-
-            example:
-              brand: Honda
-              model: CG 160 Titan
-              plate: ABC-1D23
-              renavam: "12345678901"
-              chassis: 9C2KC0810FR123456
-              year: 2024
-              color: Preto
-              engine_number: KC08E1F123456
-
+              $ref: '#/components/schemas/CreateMotorcycleRequest'
       responses:
         '201':
-          description: Motocicleta cadastrada com sucesso.
+          description: Motocicleta cadastrada.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: MOTORCYCLE.CREATE.DONE
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 42
-
+                $ref: '#/components/schemas/ApiResponse'
         '401':
-          description: Usuário não autenticado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                message: USER.UNAUTHENTICATED
-                data: null
-
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Cliente não encontrado ou não pertence ao usuário autenticado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                message: CLIENT.NOT.FOUND
-                data: null
-
+          $ref: '#/components/responses/NotFound'
         '422':
-          description: Dados da motocicleta inválidos.
+          $ref: '#/components/responses/ValidationError'
+
+  /motorcycle/{clientId}/all:
+    parameters:
+      - $ref: '#/components/parameters/ClientId'
+
+    get:
+      tags:
+        - Motorcycles
+      summary: Listar motocicletas do cliente
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Motocicletas encontradas.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
+                $ref: '#/components/schemas/MotorcycleListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /motorcycle/{clientId}/{motorcycleId}:
+    parameters:
+      - $ref: '#/components/parameters/ClientId'
+      - $ref: '#/components/parameters/MotorcycleId'
+
+    get:
+      tags:
+        - Motorcycles
+      summary: Buscar motocicleta por ID
+      description: Busca uma motocicleta pertencente ao cliente informado.
+      responses:
+        '200':
+          description: Motocicleta encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MotorcycleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Motorcycles
+      summary: Atualizar motocicleta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMotorcycleRequest'
+      responses:
+        '200':
+          description: Motocicleta atualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags:
+        - Motorcycles
+      summary: Excluir motocicleta
+      responses:
+        '200':
+          description: Motocicleta excluída.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================================================
+  # REPAIR ORDERS
+  # ==================================================
+
+  /repair-order/list-actives:
+    get:
+      tags:
+        - Repair Orders
+      summary: Listar ordens de serviço ativas
+      description: |
+        Retorna as ordens de serviço que não possuem status
+        DONE (5) ou CANCELED (6).
+      responses:
+        '200':
+          description: Ordens ativas encontradas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveRepairOrderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /repair-order/{motorcycleId}:
+    parameters:
+      - $ref: '#/components/parameters/MotorcycleId'
+
+    post:
+      tags:
+        - Repair Orders
+      summary: Criar ordem de serviço
+      description: Cria uma ordem de serviço vinculada à motocicleta.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RepairOrderRequest'
+      responses:
+        '201':
+          description: Ordem de serviço criada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /repair-order/{motorcycleId}/{repairOrderId}:
+    parameters:
+      - $ref: '#/components/parameters/MotorcycleId'
+      - $ref: '#/components/parameters/RepairOrderId'
+
+    post:
+      tags:
+        - Repair Orders
+      summary: Atualizar ordem de serviço
+      description: |
+        Atualiza a ordem de serviço utilizando o mesmo conjunto
+        de regras de validação da criação.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RepairOrderRequest'
+      responses:
+        '200':
+          description: Ordem de serviço atualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /repair-order/{repairOrderId}:
+    parameters:
+      - $ref: '#/components/parameters/RepairOrderId'
+
+    get:
+      tags:
+        - Repair Orders
+      summary: Buscar ordem de serviço
+      description: |
+        Retorna os dados completos da ordem de serviço,
+        incluindo cliente, motocicleta, peças e serviços.
+      responses:
+        '200':
+          description: Ordem de serviço encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairOrderResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Repair Orders
+      summary: Excluir ordem de serviço
+      responses:
+        '200':
+          description: Ordem de serviço excluída.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /repair-order/{repairOrderId}/sent-to-client:
+    parameters:
+      - $ref: '#/components/parameters/RepairOrderId'
+
+    get:
+      tags:
+        - Repair Orders
+      summary: Enviar ordem de serviço ao cliente
+      description: |
+        Dispara o processo de envio da ordem de serviço ao cliente.
+        A operação retorna HTTP 202 (Accepted).
+      responses:
+        '202':
+          description: Solicitação de envio aceita.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ==================================================
+# COMPONENTS
+# ==================================================
 
 components:
-  securitySchemes:
 
-    bearerAuth:
+  # --------------------------------------------------
+  # SECURITY
+  # --------------------------------------------------
+
+  securitySchemes:
+    BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: Sanctum
-      description: >
-        Token de acesso Laravel Sanctum.
-        Informe o token no formato "Bearer {token}".
+      description: Token de acesso gerado após a verificação do segundo fator.
+
+  # --------------------------------------------------
+  # PARAMETERS
+  # --------------------------------------------------
+
+  parameters:
+
+    ClientId:
+      name: clientId
+      in: path
+      required: true
+      description: Identificador do cliente.
+      schema:
+        type: integer
+        minimum: 1
+      example: 2
+
+    MotorcycleId:
+      name: motorcycleId
+      in: path
+      required: true
+      description: Identificador da motocicleta.
+      schema:
+        type: integer
+        minimum: 1
+      example: 2
+
+    RepairOrderId:
+      name: repairOrderId
+      in: path
+      required: true
+      description: Identificador da ordem de serviço.
+      schema:
+        type: integer
+        minimum: 1
+      example: 10
+
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Número da página.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      description: Quantidade de registros por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 15
+      example: 15
+
+  # --------------------------------------------------
+  # RESPONSES
+  # --------------------------------------------------
+
+  responses:
+
+    Unauthorized:
+      description: Usuário não autenticado ou token inválido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: USER.UNAUTHENTICATED
+            data: null
+
+    NotFound:
+      description: Registro não encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: CLIENT.NOT_FOUND
+            data: null
+
+    ValidationError:
+      description: Erro de validação dos campos enviados.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            message: FORM.CLIENT.NAME.REQUIRED
+            data: null
+
+  # --------------------------------------------------
+  # SCHEMAS
+  # --------------------------------------------------
+
+  schemas:
+
+    # ================================================
+    # COMMON
+    # ================================================
+
+    ApiResponse:
+      type: object
+      description: Envelope padrão de resposta da API.
+      properties:
+        message:
+          type: string
+          example: OPERATION.SUCCESS
+        data: {}
+      required:
+        - message
+        - data
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: USER.UNAUTHENTICATED
+        data: {}
+      required:
+        - message
+        - data
+
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 15
+        total:
+          type: integer
+          example: 2
+        last_page:
+          type: integer
+          example: 1
+        from:
+          type: [integer, "null"]
+          example: 1
+        to:
+          type: [integer, "null"]
+          example: 2
+      required:
+        - current_page
+        - per_page
+        - total
+        - last_page
+        - from
+        - to
+
+    # ================================================
+    # AUTHENTICATION
+    # ================================================
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: contato@example.com
+        password:
+          type: string
+          format: password
+          example: "Password123!"
+      required:
+        - email
+        - password
+
+    LoginVerifyRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: contato@example.com
+        code:
+          type: string
+          minLength: 6
+          maxLength: 6
+          description: Código de verificação com exatamente 6 caracteres.
+          example: "123456"
+      required:
+        - email
+        - code
+
+    LoginSuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: USER.LOGIN.SUCCESS
+        data:
+          type: object
+          properties:
+            two_factor_code_generated:
+              type: boolean
+              example: true
+          required:
+            - two_factor_code_generated
+      required:
+        - message
+        - data
+
+    LoginVerifySuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: USER.CODE.VERIFIED
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: Token de autenticação.
+              example: "2|{access_token}"
+            token_type:
+              type: string
+              example: Bearer
+          required:
+            - token
+            - token_type
+      required:
+        - message
+        - data
+
+    # ================================================
+    # CLIENTS
+    # ================================================
+
+    CreateClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: Jonas Moriá
+        phone:
+          type: string
+          description: Telefone celular brasileiro.
+          example: "5512996717939"
+        email:
+          type: [string, "null"]
+          format: email
+          maxLength: 255
+          example: contato@example.com
+        document:
+          type: [string, "null"]
+          maxLength: 20
+          example: "51899251880"
+        address:
+          type: [string, "null"]
+          example: Rua Presidente Bernardes, 151
+        avatar:
+          type: string
+          format: binary
+          description: |
+            Imagem de perfil. Formatos permitidos: jpg, jpeg, png e webp.
+            Tamanho máximo: 5120 KB.
+      required:
+        - name
+        - phone
+
+    UpdateClientRequest:
+      type: object
+      description: Todos os campos são opcionais. Campos nullable aceitam null.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: Jonas Moriá
+        phone:
+          type: string
+          description: Telefone celular brasileiro.
+          example: "5512996717939"
+        email:
+          type: [string, "null"]
+          format: email
+          maxLength: 255
+          example: contato@example.com
+        document:
+          type: [string, "null"]
+          maxLength: 20
+          example: "51899251880"
+        address:
+          type: [string, "null"]
+          example: Rua Presidente Bernardes, 151
+        avatar:
+          type: string
+          format: binary
+          description: |
+            Imagem de perfil. Formatos permitidos: jpg, jpeg, png e webp.
+            Tamanho máximo: 5120 KB.
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type: string
+          example: Jonas Moriá
+        phone:
+          type: string
+          example: "5512996717939"
+        email:
+          type: [string, "null"]
+          format: email
+          example: contato@example.com
+        document:
+          type: [string, "null"]
+          example: "51899251880"
+        address:
+          type: [string, "null"]
+          example: null
+        avatar_path:
+          type: [string, "null"]
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-11-02T19:50:52.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-11-02T19:50:52.000000Z"
+      required:
+        - id
+        - name
+        - phone
+        - email
+        - document
+        - address
+        - avatar_path
+        - created_at
+        - updated_at
+
+    ClientResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: CLIENT.FIND.SUCCESS
+        data:
+          $ref: '#/components/schemas/Client'
+      required:
+        - message
+        - data
+
+    ClientListData:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Client'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - data
+        - pagination
+
+    ClientListResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: CLIENT.FIND_ALL.SUCCESS
+        data:
+          $ref: '#/components/schemas/ClientListData'
+      required:
+        - message
+        - data
+
+    # ================================================
+    # MOTORCYCLES
+    # ================================================
+
+    CreateMotorcycleRequest:
+      type: object
+      properties:
+        brand:
+          type: string
+          maxLength: 100
+          example: Yamaha
+        model:
+          type: string
+          maxLength: 100
+          example: Fazer 250
+        plate:
+          type: string
+          maxLength: 10
+          example: DQW0255
+        renavam:
+          type: [string, "null"]
+          maxLength: 11
+          example: "10887924546"
+        chassis:
+          type: [string, "null"]
+          maxLength: 17
+          example: "1T2UPS9EFVWEX2419"
+        year:
+          type: [integer, "null"]
+          minimum: 1900
+          example: 2025
+        color:
+          type: [string, "null"]
+          maxLength: 50
+          example: Preta
+        engine_number:
+          type: [string, "null"]
+          maxLength: 50
+          example: "ENG123456"
+      required:
+        - brand
+        - model
+        - plate
+
+    UpdateMotorcycleRequest:
+      type: object
+      description: Todos os campos são opcionais. Campos nullable aceitam null.
+      properties:
+        brand:
+          type: string
+          maxLength: 100
+          example: Yamaha
+        model:
+          type: string
+          maxLength: 100
+          example: Fazer 250
+        plate:
+          type: string
+          maxLength: 10
+          example: DQW0255
+        renavam:
+          type: [string, "null"]
+          maxLength: 11
+          example: "10887924546"
+        chassis:
+          type: [string, "null"]
+          maxLength: 17
+          example: "1T2UPS9EFVWEX2419"
+        year:
+          type: [integer, "null"]
+          minimum: 1900
+          example: 2025
+        color:
+          type: [string, "null"]
+          maxLength: 50
+          example: Preta
+        engine_number:
+          type: [string, "null"]
+          maxLength: 50
+          example: "ENG123456"
+
+    Motorcycle:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        brand:
+          type: string
+          example: Yamaha
+        model:
+          type: string
+          example: Fazer 250
+        plate:
+          type: string
+          example: DQW0255
+        renavam:
+          type: [string, "null"]
+          example: "10887924546"
+        chassis:
+          type: [string, "null"]
+          example: "1T2UPS9EFVWEX2419"
+        year:
+          type: [integer, "null"]
+          example: 2025
+        color:
+          type: [string, "null"]
+          example: Preta
+        engine_number:
+          type: [string, "null"]
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-11-02T19:55:13.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-11-02T19:55:13.000000Z"
+      required:
+        - id
+        - brand
+        - model
+        - plate
+        - renavam
+        - chassis
+        - year
+        - color
+        - engine_number
+        - created_at
+        - updated_at
+
+    MotorcycleResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: MOTORCYCLE.FIND.SUCCESS
+        data:
+          $ref: '#/components/schemas/Motorcycle'
+      required:
+        - message
+        - data
+
+    MotorcycleListData:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Motorcycle'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required:
+        - data
+        - pagination
+
+    MotorcycleListResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: MOTORCYCLE.FIND_ALL.SUCCESS
+        data:
+          $ref: '#/components/schemas/MotorcycleListData'
+      required:
+        - message
+        - data
+
+    # ================================================
+    # REPAIR ORDER ENUMS
+    # ================================================
+
+    RepairStatusCode:
+      type: integer
+      description: Status da ordem de serviço.
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+      x-enum-varnames:
+        - CREATED
+        - WAITING
+        - IN_MAINTENANCE
+        - WAITING_PICKUP
+        - DONE
+        - CANCELED
+      x-enum-descriptions:
+        - Created
+        - Waiting
+        - In Maintenance
+        - Waiting Pickup
+        - Done
+        - Canceled
+      example: 1
+
+    UrgencyLevelCode:
+      type: integer
+      description: Nível de urgência da ordem de serviço.
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+      x-enum-varnames:
+        - VERY_LOW
+        - LOW
+        - MEDIUM
+        - HIGH
+        - VERY_HIGH
+      x-enum-descriptions:
+        - Lowest
+        - Low
+        - Medium
+        - High
+        - Highest
+      example: 3
+
+    # ================================================
+    # REPAIR ORDER REQUESTS
+    # ================================================
+
+    RepairOrderPartRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: Óleo 5W30 MOTUL
+        description:
+          type: [string, "null"]
+          example: null
+        quantity:
+          type: number
+          exclusiveMinimum: 0
+          multipleOf: 0.01
+          example: 1.98
+        unit_value:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+          example: 35.00
+      required:
+        - name
+        - unit_value
+
+    RepairOrderServiceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: Troca de óleo
+        description:
+          type: [string, "null"]
+          example: null
+        quantity:
+          type: number
+          exclusiveMinimum: 0
+          multipleOf: 0.01
+          example: 1.00
+        unit_value:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+          example: 10.00
+      required:
+        - name
+        - unit_value
+
+    RepairOrderRequest:
+      type: object
+      description: |
+        Dados para criação ou atualização de ordem de serviço.
+        A atualização utiliza o mesmo FormRequest da criação,
+        portanto title e description continuam obrigatórios.
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          example: Revisão completa
+        description:
+          type: string
+          example: Revisão premium
+        status:
+          $ref: '#/components/schemas/RepairStatusCode'
+        urgency_level:
+          $ref: '#/components/schemas/UrgencyLevelCode'
+        diagnosis:
+          type: [string, "null"]
+          example: Revisão de fluidos, pneus e rolamentos
+        observations:
+          type: [string, "null"]
+          example: Verificar partida a frio
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairOrderPartRequest'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairOrderServiceRequest'
+      required:
+        - title
+        - description
+
+    # ================================================
+    # REPAIR ORDER RESPONSE RELATIONSHIPS
+    # ================================================
+
+    RepairOrderPart:
+      type: object
+      properties:
+        repair_part_id:
+          type: integer
+          example: 19
+        repair_part_name:
+          type: string
+          example: Óleo 5W30 MOTUL
+        repair_part_description:
+          type: [string, "null"]
+          example: null
+        repair_part_quantity:
+          type: string
+          example: "1.98"
+        repair_part_unit_value:
+          type: string
+          example: "35.00"
+      required:
+        - repair_part_id
+        - repair_part_name
+        - repair_part_description
+        - repair_part_quantity
+        - repair_part_unit_value
+
+    RepairOrderService:
+      type: object
+      properties:
+        repair_service_id:
+          type: integer
+          example: 14
+        repair_service_name:
+          type: string
+          example: Troca de óleo
+        repair_service_description:
+          type: [string, "null"]
+          example: null
+        repair_service_quantity:
+          type: string
+          example: "1.00"
+        repair_service_unit_value:
+          type: string
+          example: "10.00"
+      required:
+        - repair_service_id
+        - repair_service_name
+        - repair_service_description
+        - repair_service_quantity
+        - repair_service_unit_value
+
+    RepairOrderClient:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type: string
+          example: Jonas Moriá
+        phone:
+          type: string
+          example: "5512996717939"
+        email:
+          type: [string, "null"]
+          format: email
+          example: contato@example.com
+        document:
+          type: [string, "null"]
+          example: "51899251880"
+        address:
+          type: [string, "null"]
+          example: null
+        profile_photo:
+          type: [string, "null"]
+          example: null
+      required:
+        - id
+        - name
+        - phone
+        - email
+        - document
+        - address
+        - profile_photo
+
+    RepairOrderMotorcycle:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        brand:
+          type: string
+          example: Yamaha
+        model:
+          type: string
+          example: Fazer 250
+        plate:
+          type: string
+          example: DQW0255
+        renavam:
+          type: [string, "null"]
+          example: "10887924546"
+        chassis:
+          type: [string, "null"]
+          example: "1T2UPS9EFVWEX2419"
+        year:
+          type: [integer, "null"]
+          example: 2025
+        color:
+          type: [string, "null"]
+          example: Preta
+        engine_number:
+          type: [string, "null"]
+          example: null
+      required:
+        - id
+        - brand
+        - model
+        - plate
+        - renavam
+        - chassis
+        - year
+        - color
+        - engine_number
+
+    # ================================================
+    # REPAIR ORDER DETAIL RESPONSE
+    # ================================================
+
+    RepairOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        status:
+          $ref: '#/components/schemas/RepairStatusCode'
+        urgency_level:
+          $ref: '#/components/schemas/UrgencyLevelCode'
+        title:
+          type: string
+          example: Revisão completa
+        description:
+          type: string
+          example: Revisão premium
+        diagnosis:
+          type: [string, "null"]
+          example: Revisão de fluidos, pneus e rolamentos
+        observations:
+          type: [string, "null"]
+          example: Verificar partida a frio
+        started_at:
+          type: [string, "null"]
+          example: null
+        finished_at:
+          type: [string, "null"]
+          example: null
+        delivered_at:
+          type: [string, "null"]
+          example: null
+        created_at:
+          type: string
+          example: "2026-11-02 18:24:11"
+        updated_at:
+          type: string
+          example: "2026-11-02 18:24:11"
+        client:
+          $ref: '#/components/schemas/RepairOrderClient'
+        motorcycle:
+          $ref: '#/components/schemas/RepairOrderMotorcycle'
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairOrderPart'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairOrderService'
+      required:
+        - id
+        - status
+        - urgency_level
+        - title
+        - description
+        - diagnosis
+        - observations
+        - started_at
+        - finished_at
+        - delivered_at
+        - created_at
+        - updated_at
+        - client
+        - motorcycle
+        - parts
+        - services
+
+    RepairOrderResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: REPAIR.GET.OK
+        data:
+          $ref: '#/components/schemas/RepairOrder'
+      required:
+        - message
+        - data
+
+    # ================================================
+    # ACTIVE REPAIR ORDER LIST
+    # ================================================
+
+    ActiveRepairOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        motorcycle_id:
+          type: integer
+          example: 2
+        status:
+          $ref: '#/components/schemas/RepairStatusCode'
+        urgency_level:
+          $ref: '#/components/schemas/UrgencyLevelCode'
+        title:
+          type: string
+          example: Revisão completa
+        description:
+          type: string
+          example: Revisão premium
+        diagnosis:
+          type: [string, "null"]
+          example: Revisão de fluidos, pneus e rolamentos
+        observations:
+          type: [string, "null"]
+          example: Verificar partida a frio
+        started_at:
+          type: [string, "null"]
+          example: null
+        finished_at:
+          type: [string, "null"]
+          example: null
+        delivered_at:
+          type: [string, "null"]
+          example: null
+        created_at:
+          type: string
+          example: "2026-11-02 18:24:11"
+        motorcycle_brand:
+          type: string
+          example: Yamaha
+        motorcycle_model:
+          type: string
+          example: Fazer 250
+        motorcycle_color:
+          type: [string, "null"]
+          example: Preta
+        motorcycle_plate:
+          type: string
+          example: DQW0255
+        client_id:
+          type: integer
+          example: 2
+        client_name:
+          type: string
+          example: Jonas Moriá
+        client_phone:
+          type: string
+          example: "5512996717939"
+        profile_photo:
+          type: [string, "null"]
+          example: null
+      required:
+        - id
+        - motorcycle_id
+        - status
+        - urgency_level
+        - title
+        - description
+        - diagnosis
+        - observations
+        - started_at
+        - finished_at
+        - delivered_at
+        - created_at
+        - motorcycle_brand
+        - motorcycle_model
+        - motorcycle_color
+        - motorcycle_plate
+        - client_id
+        - client_name
+        - client_phone
+        - profile_photo
+
+    ActiveRepairOrderListResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: REPAIR.ACTIVE.LIST
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveRepairOrder'
+      required:
+        - message
+        - data
